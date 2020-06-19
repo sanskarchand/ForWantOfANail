@@ -25,6 +25,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #endif()
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(Qt5 COMPONENTS Core REQUIRED)
+find_package(Qt5 COMPONENTS Network REQUIRED)
+find_package(LibXml2 REQUIRED)
 
 if(ANDROID)
   add_library(for_want_of_a_nail SHARED
@@ -36,9 +39,18 @@ else()
   add_executable(for_want_of_a_nail
     main.cpp
     mainwindow.cpp
+    utils.cpp
+    FanficModel/FanficModel.cpp
+    Network/DownloadManager.cpp
     mainwindow.h
     config.h
+    utils.h
+    FanficModel/FanficModel.h
+    Network/DownloadManager.h
   )
 endif()
 
 target_link_libraries(for_want_of_a_nail PRIVATE Qt5::Widgets)
+target_link_libraries(for_want_of_a_nail PRIVATE Qt5::Core)
+target_link_libraries(for_want_of_a_nail PRIVATE Qt5::Network)
+target_link_libraries(for_want_of_a_nail PRIVATE ${LIBXML2_LIBRARIES})

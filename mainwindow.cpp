@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include <iostream>     // temp
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -49,10 +50,9 @@ QWidget* MainWindow::createDownloadTab()
 {
     QWidget *dlContainer = new QWidget;
     QGridLayout *layout = new QGridLayout;
-    QPushButton *dlButton = new QPushButton("&Download", this);
+    QPushButton *dlButton = new QPushButton("&Download Fic", this);
     m_urlBar = new QLineEdit();
 
-    int size = layout->originCorner();
 
     dlContainer->setLayout(layout);
     layout->addWidget(m_urlBar, 0, 0, Qt::AlignTop);
@@ -65,4 +65,6 @@ QWidget* MainWindow::createDownloadTab()
 
 void MainWindow::handleDownloadButton()
 {
+    m_downloadManager.appendRawFic(m_urlBar->text());
+    //m_downloadManager.appendChapter(m_urlBar->text());
 }

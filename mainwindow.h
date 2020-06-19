@@ -1,7 +1,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <iostream>     // temp
 #include <Qt>
 #include <QMainWindow>
 #include <QSplitter>
@@ -11,6 +10,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include "Network/DownloadManager.h"
 
 #define MIN_WIN_WIDTH 640
 #define MIN_WIN_HEIGHT 480
@@ -28,6 +28,8 @@ private slots:                          //Qt-specific extension for MOC
     void handleDownloadButton();
 
 public:
+    DownloadManager m_downloadManager;
+
     QGridLayout     *m_layout;
     QWidget         *m_centralWidget;
     QTabWidget      *m_tabWidget;
