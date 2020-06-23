@@ -7,8 +7,29 @@ class FicParser:
 
     def __init__(self, htmlContent):
         
-        self.soup =  bs4.BeautifulSoup(htmlContent, "html.parser")
+        # Don't use html.parser - it auto-fixes tags and breaks on some fics
+        # .e.g https://www.fanfiction.net/s/107806/1/Blackadder-Serpent-of-the-Seven-Seas
+        self.soup =  bs4.BeautifulSoup(htmlContent, "html5lib")
 
+
+    def getMainStory(self):
+
+        # Add left alignment to all paragraph tags.
+        # Otherwise, all the text will show up center-aligned, and that wouldn't be very pleasant to read
+        paras = self.soup.select("div.storytextp")[0].findAll("p")
+        for p in paras:
+            p["style"]= "text-align: left;"
+
+        return  str(self.soup.select("div.storytextp")[0])
+        
+
+        # No longer needed after the switch to html5lib
+        stringFinal = ""
+        for child in self.soup.select("div.storytextp")[0].children:
+            print("CHILD = ", str(child))
+            stringFinal += str(child)
+        return stringFinal
+        
 
     def constructMetadata(self):
 
@@ -16,6 +37,7 @@ class FicParser:
         
         titles =  self.soup.findAll("b", {"class": "xcontrast_txt"})
         summ = self.soup.findAll("div", {"class": "xcontrast_txt"})
+        image_tag = self.soup.findAll("img", attrs={"data-original"}) #<REM>
         
         links = self.soup.findAll("a", {"class": "xcontrast_txt"})
         author_link = None
@@ -29,7 +51,6 @@ class FicParser:
         payload_children = list(huge_payload[0].children)
 
         modelObject = StoryModel.StoryMetadata()
-        
         """
         Parse the payload: Has 9 children;
         Indices:
@@ -39,11 +60,23 @@ class FicParser:
             4 -> Favs: [num] - Follows: [num] - Updated:
             5 -> updated (inside span tag), m/d/y
             7- > published (inside span tag)
-            8 -> - id: [num]
+            8 -> - id: [num] ( if complete, - Status: Complete - id: [num] )
+
+            --- alt, if oneshot
+            2 -> - Language - Genre1/Genre2 - Words:[num] - Reviews:
+            5-> published (inside span tag)
+            6 -> - id: [num] ( if complete, - Status: Complete - id: [num] )
         """
+
+        isOneShot = "Updated" not in payload_children[4]
        
         modelObject.title = titles[0].text
-        modelObject.storyID =  payload_children[8].split(":")[1].strip()
+
+        if isOneShot:
+            modelObject.storyID =  payload_children[6].split(":")[-1].strip()
+        else:
+            modelObject.storyID =  payload_children[8].split(":")[-1].strip()
+
         modelObject.author = author_link.text
         modelObject.authorID = self.extractUserID(author_link["href"])
         modelObject.rating = payload_children[1].text
@@ -58,29 +91,57 @@ class FicParser:
         
         modelObject.genreList = index2_list[2].split("/")
 
-        # Parsing decision depends on existence of character list
-        if "Chapters:" in index2_list[3]:
-            modelObject.numChapters = numFromStringFunc( extractKeyFunc(index2_list[3]) )
-            modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[4]) )
-        else:
-            # single character listed
-            if ',' not in index2_list[3]:
-                modelObject.characterList.append( index2_list[3] )
+        # Parsing decision depends on existence of character list, which in turn depends on 
+        #   whether the fic is a oneshot
+
+        if not isOneShot:
+            if "Chapters:" in index2_list[3]:
+                modelObject.numChapters = numFromStringFunc( extractKeyFunc(index2_list[3]) )
+                modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[4]) )
             else:
-                modelObject.characterList.extend( index2_list[3].split(",") )
+                # single character listed
+                if ',' not in index2_list[3]:
+                    modelObject.characterList.append( index2_list[3] )
+                else:
+                    modelObject.characterList.extend( index2_list[3].split(",") )
 
-            modelObject.numChapters = numFromStringFunc( extractKeyFunc(index2_list[4]) )
-            modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[5]) )
+                modelObject.numChapters = numFromStringFunc( extractKeyFunc(index2_list[4]) )
+                modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[5]) )
 
-        modelObject.language = index2_list[1]
+            modelObject.language = index2_list[1]
 
-        modelObject.numFavs = numFromStringFunc( extractKeyFunc(index4_list[1]) )
-        modelObject.numFollows = numFromStringFunc( extractKeyFunc(index4_list[2]) )
-        modelObject.numReviews = numFromStringFunc( payload_children[3].text )
-    
-        modelObject.updatedTimestamp = payload_children[5]["data-xutime"]
-        modelObject.publishedTimestamp = payload_children[7]["data-xutime"]
-        modelObject.publishedDateString = str(payload_children[7].text)
+            modelObject.numFavs = numFromStringFunc( extractKeyFunc(index4_list[1]) )
+            modelObject.numFollows = numFromStringFunc( extractKeyFunc(index4_list[2]) )
+            modelObject.numReviews = numFromStringFunc( payload_children[3].text )
+        else:
+            modelObject.numChapters = 1
+            # No character list
+            if "Words:" in index2_list[3]:
+                modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[3]) )
+            else:
+                # single character listed
+                if ',' not in index2_list[3]:
+                    modelObject.characterList.append( index2_list[3] )
+                else:
+                    modelObject.characterList.extend( index2_list[3].split(",") )
+
+                modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[4]) )
+
+            modelObject.language = index2_list[1]
+
+            modelObject.numFavs = numFromStringFunc( extractKeyFunc(index4_list[1]) )
+            modelObject.numFollows = numFromStringFunc( extractKeyFunc(index4_list[2]) )
+            modelObject.numReviews = numFromStringFunc( payload_children[3].text )
+
+
+        
+        if isOneShot:
+            modelObject.publishedTimestamp = payload_children[5]["data-xutime"]
+            modelObject.publishedDateString = str(payload_children[5].text)
+        else:
+            modelObject.updatedTimestamp = payload_children[5]["data-xutime"]
+            modelObject.publishedTimestamp = payload_children[7]["data-xutime"]
+            modelObject.publishedDateString = str(payload_children[7].text)
 
         preStoryDiv = self.soup.select("div#pre_story_links")[0]
 
@@ -105,21 +166,23 @@ class FicParser:
             modelObject.category = path[0]
             modelObject.fandom = path[1]
 
-
-
-        chapterNav = self.soup.select("#chap_select")[0]
-        optionTags = chapterNav.findAll("option")
-
-        #NOTE: since the option tags are not closed, the _text_ attribute gives the 
-        #titles for all chapters. So, we do the following to get the pure titles
-        temp_li = [tag.text for tag in optionTags]
-        pure_chapter_titles = self.extractPureChapterTitles(temp_li)
-
-        for chap_title in pure_chapter_titles:
-            modelObject.chapterTitles.append(chap_title)
         
-       
-        modelObject.numChapters = len(modelObject.chapterTitles)
+        if not isOneShot:
+            chapterNav = self.soup.select("#chap_select")[0]
+            optionTags = chapterNav.findAll("option")
+
+            #NOTE: since the option tags are not closed, the _text_ attribute gives the 
+            #titles for all chapters. So, we do the following to get the pure titles
+            temp_li = [tag.text for tag in optionTags]
+            pure_chapter_titles = self.extractPureChapterTitles(temp_li)
+
+            for chap_title in pure_chapter_titles:
+                modelObject.chapterTitles.append(chap_title)
+            
+           
+            modelObject.numChapters = len(modelObject.chapterTitles)
+        else:
+            modelObject.chapterTitles.append("<Oneshot>")
         
         """
         mainStoryDiv = self.soup.select("div.storytextp")[0]
@@ -138,10 +201,13 @@ class FicParser:
     def extractUserID(self, profileURL):
         # /u/1602381/Shadow-Rebirth
 
-        print("GIVEN: ", profileURL)
+        #print("GIVEN: ", profileURL)
         return profileURL.split("/")[2]
 
     def extractPureChapterTitles(self, whack_titles):
+
+        # After using html5lib instead of html.parser, this too is unnecessary
+        return whack_titles
 
         last = whack_titles[-1]
         # Rest of the whack titles in reverse order

@@ -72,7 +72,8 @@ class FanficModel:
         
         self.realDirectory = None
         self.realFiles = []
-        
+        self.imageFilePath = None    
+
         # For in-app classification; pun fully intended
         self.ficPath = []
         self.tags = set()
@@ -84,18 +85,25 @@ class FanficModel:
         self.realFiles.append(path)
         
     def getCleanPrefix(self):
-        return self.metadata.title.replace(" ", "_").replace("'", "_")
+        val = self.metadata.title
+        for char in const.SPECIAL_CHARS:
+            val = val.replace(char, "_")
+
+        return val
 
     def setRealDirectory(self):
         self.realDirectory = policyGetRealFolder(self.metadata)
 
     def getMetadata(self):
         return metadata
+
+    def getMetaFileName(self):
+        return policyGetRealFolder(self.metadata) + ".ffmdata"
     
     def dumpToDisk(self):
 
         path  = const.DEFAULT_META_PATH
-        path = os.path.join(path, policyGetRealFolder(self.metadata) + ".ffmdata") 
+        path = os.path.join(path, self.getMetaFileName())
 
         with open(path, "wb") as fi:
             pickle.dump(self, fi)
@@ -109,7 +117,11 @@ def policyGetRealFolder(fanficMetadata):
     else:
         name = fanficMetadata.fandom.replace(" ", "_")
     '''
-    name = fanficMetadata.title.replace(" ", "_")
-    name = name.replace("'", "_")
+   
+    name = fanficMetadata.title
+    
+    for char in const.SPECIAL_CHARS:
+        name = name.replace(char, "_")
+
 
     return name + "_" + fanficMetadata.storyID

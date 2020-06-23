@@ -4,6 +4,9 @@ from PyQt5.QtCore import Qt
 from PyQt5 import QtCore, QtWidgets, QtGui
 import config.const as const
 from network.DownloadManager import DownloadManager
+from parser import FicParser
+import FicCard
+import os, pickle
 
 class MainWindow(QtWidgets.QMainWindow):
     
@@ -11,12 +14,34 @@ class MainWindow(QtWidgets.QMainWindow):
 
         super().__init__()
 
+        self.loadedFicModels = []
+        self.currentReadingFic = None
+        self.currentReadingChapterIndex = None
+
         self.centralWidget = QtWidgets.QWidget()
         self.centralLayout = QtWidgets.QGridLayout()
         
         self.tabWidget = QtWidgets.QTabWidget()
-        self.splitter = QtWidgets.QSplitter(Qt.Horizontal)
+
+        # tab 1 - reading tab
+        self.splitter = QtWidgets.QSplitter(Qt.Vertical)
+        self.readNavWidget = QtWidgets.QWidget()
+        self.readNavWidgetLayout = QtWidgets.QGridLayout()
+
+        self.nextChapButton = QtWidgets.QPushButton()
+        self.textInfoLabel = QtWidgets.QLabel("<NO TEXT>")
+        self.prevChapButton = QtWidgets.QPushButton()
+
         self.htmlTextBrowser = QtWidgets.QTextBrowser()
+
+        # tab 2-  library stuff
+        self.tabLibContainer = QtWidgets.QWidget()
+        self.tabLibCardContainer = QtWidgets.QWidget()
+        self.tabLibContainerLayout = QtWidgets.QGridLayout()
+        self.tabLibCardContainerLayout = QtWidgets.QGridLayout()
+        self.butPopulateLibrary = QtWidgets.QPushButton("&Populate", self)
+
+        self.tabLibScrollArea = QtWidgets.QScrollArea()
 
         # tab 3 - Downloading stuff stuff
         self.tabDlContainer = QtWidgets.QWidget()
@@ -38,13 +63,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def initializeGUI(self):
         
         self.centralWidget.setLayout(self.centralLayout)
-        self.splitter.addWidget(QtWidgets.QLabel("Hahaha"))
-        self.splitter.addWidget(self.htmlTextBrowser)
-
+        
         # -- TAB INITIALIZATION -- #
-        container_1 = self.splitter
-        container_2 = QtWidgets.QWidget()
-        container_3 = self.createDownloadBar()
+        container_1 = self.createReadingTab()
+        container_2 = self.createLibraryTab()
+        container_3 = self.createDownloadTab()
 
         self.tabWidget.addTab(container_1, "Read")
         self.tabWidget.addTab(container_2, "Library")
@@ -61,20 +84,53 @@ class MainWindow(QtWidgets.QMainWindow):
         # the download manager should handle the updating
         self.tabDlFicLayout.addWidget(widget)
 
+    
+    def createReadingTab(self):
 
-    def createDownloadBar(self):
+        self.readNavWidget.setLayout(self.readNavWidgetLayout)
+        self.readNavWidgetLayout.setVerticalSpacing(0)
+        
+        # set button icons and other styles
+        self.textInfoLabel.setStyleSheet("text-align: center;")
+        style_1 = QtWidgets.QCommonStyle()
+        self.prevChapButton.setIcon(style_1.standardIcon(QtWidgets.QStyle.SP_ArrowLeft))
+        self.nextChapButton.setIcon(style_1.standardIcon(QtWidgets.QStyle.SP_ArrowRight))
+
+        #connect
+        self.prevChapButton.released.connect(self.handleNavPrevPage)
+        self.nextChapButton.released.connect(self.handleNavNextPage)
+
+        # html alignment
+        self.htmlTextBrowser.setAlignment(Qt.AlignLeft)
+
+        self.readNavWidgetLayout.addWidget(self.prevChapButton, 0, 0, Qt.AlignLeft)
+        self.readNavWidgetLayout.addWidget(self.textInfoLabel, 0, 1, Qt.AlignHCenter)
+        self.readNavWidgetLayout.addWidget(self.nextChapButton, 0, 2, Qt.AlignRight)
+
+        self.splitter.addWidget(self.readNavWidget)
+        self.splitter.addWidget(self.htmlTextBrowser)
+
+        return self.splitter
+
+    def createDownloadTab(self):
 
         self.tabDlContainer.setLayout(self.tabDlLayout)
         self.tabDlFicContainer.setLayout(self.tabDlFicLayout)
          
-        self.tabDlFicContainer.setStyleSheet("background-color:#" + const.COLOR_DL_QUEUE + ";")
         self.tabDlLayout.setVerticalSpacing(0)
-        self.tabDlFicLayout.setSpacing(0)
+        self.tabDlLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.tabDlLayout.addWidget(self.urlBar, 0, 0, Qt.AlignTop)
-        self.tabDlLayout.addWidget(self.butDownloadFic, 0, 1, 
-                Qt.AlignTop)
-        self.tabDlLayout.addWidget(self.butActualDownload, 1, 1, Qt.AlignTop)
+        self.tabDlFicLayout.setSpacing(5)
+        self.tabDlFicLayout.setContentsMargins(0, 0, 0, 0) # l, t, r, b
+        self.tabDlFicLayout.setAlignment(Qt.AlignTop)
+
+
+        # url example
+        self.urlBar.setPlaceholderText("e.g. https://www.fanfiction.net/s/4390285/1/Searching-for-Disaster")
+
+        self.tabDlLayout.addWidget(self.urlBar, 0, 0)
+        self.tabDlLayout.addWidget(self.butDownloadFic, 0, 1)
+        self.tabDlLayout.addWidget(self.butActualDownload, 1, 1)
 
         self.tabDlLayout.addWidget(self.tabDlFicContainer, 2, 0)
 
@@ -84,7 +140,55 @@ class MainWindow(QtWidgets.QMainWindow):
 
         return self.tabDlContainer
 
+    def createLibraryTab(self):
+        self.tabLibContainer.setLayout(self.tabLibContainerLayout)
+        self.tabLibContainerLayout.setVerticalSpacing(0)
+        self.tabLibContainerLayout.setAlignment(Qt.AlignTop)
 
+        self.tabLibCardContainer.setLayout(self.tabLibCardContainerLayout)
+        self.tabLibCardContainerLayout.setVerticalSpacing(5)
+        self.tabLibCardContainerLayout.setAlignment(Qt.AlignTop)
+        
+        self.tabLibScrollArea.setWidget(self.tabLibCardContainer)
+        self.tabLibScrollArea.setWidgetResizable(True)
+
+        self.tabLibContainerLayout.addWidget(self.butPopulateLibrary, 0, 0)
+        self.tabLibContainerLayout.addWidget(self.tabLibScrollArea, 1, 0)
+        self.butPopulateLibrary.released.connect(self.handleFicPopulate)
+
+        
+        return self.tabLibContainer
+
+
+    #--- SIGNALS --
+
+    def handleFicPopulate(self):
+
+        target_files = os.listdir(const.DEFAULT_META_PATH)
+
+        for filename in target_files:
+            
+            ind = filename.rfind(".")
+            if filename[ind:] == ".ffmdata":
+                # Un-pickle and add
+                path = os.path.join(const.DEFAULT_META_PATH, filename)
+                
+                with open(path, "rb") as fi:
+                    ficModel = pickle.load(fi)
+
+                    self.loadedFicModels.append(ficModel)
+        
+
+        for idx, model in enumerate(self.loadedFicModels):
+            widget = FicCard.FicCard(self, model)
+            row, col = self.getGridCoordsFromIndex(idx)
+            self.tabLibCardContainerLayout.addWidget(widget, row, col)
+
+
+
+
+
+        
     def handleFicDownload(self):
         text = self.urlBar.text()
         if text == "":
@@ -94,4 +198,62 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def handleActualDownload(self):
         self.downloadManager.startDownloads()
+
+
+
+    def handleNavNextPage(self):
+
+        if self.currentReadingChapterIndex == self.currentReadingFic.metadata.numChapters - 1:
+            return
+
+        self.currentReadingChapterIndex += 1
+        self.setReadingPage(self.currentReadingChapterIndex)
+
+    def handleNavPrevPage(self):
+
+        if self.currentReadingChapterIndex == 0:
+            return
+        self.currentReadingChapterIndex -= 1
+        self.setReadingPage(self.currentReadingChapterIndex)
+
+
+
+    # --- utils
+
+    def setReadingHTML(self, file_path):
+
+        with open(file_path, "r") as f:
+            dat = f.read()
+            par = FicParser.FicParser(dat)
+            mainHTML = par.getMainStory()
+
+            self.htmlTextBrowser.setHtml(mainHTML)
+
+
+    def setReadingPage(self, index):
+        self.currentReadingChapterIndex = index
+        self.setReadingHTML(self.currentReadingFic.realFiles[index])
+
+        ficName = self.currentReadingFic.metadata.title
+        chapName = self.currentReadingFic.metadata.chapterTitles[index]
+
+        label_text = ficName + "\n" + chapName
+        self.textInfoLabel.setText(label_text)
+
+    def setReadingFic(self, ficModel):
+        self.currentReadingFic = ficModel
+        #self.currentReadingChapterIndex = 0
+        self.setReadingPage(0)
+        #self.setReadingHTML(self.currentReadingFic.realFiles[0])
+
+
+    def getGridCoordsFromIndex(self, index):
+
+        row = index // 3
+        col = index % 3
+
+        return (row, col)
+
+        
+
 

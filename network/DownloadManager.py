@@ -7,9 +7,10 @@ import PyQt5
 from PyQt5 import QtCore
 import config.const as const
 import model.StoryModel as StoryModel
+
 import queue
 import os
-
+import zlib
 from parser import FicParser
 
 class FicDownloadModel:
@@ -41,9 +42,14 @@ class FicDownloadModel:
 
         self.widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout()
-        layout.setSpacing(5)
         self.widget.setLayout(layout)
+    
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(Qt.AlignTop)
 
+        self.widget.setStyleSheet("background-color: {};".format(const.COLOR_DL_QUEUE))
+        self.labelMain.setStyleSheet("font-weight: bold;")
         layout.addWidget(self.labelMain)
         layout.addWidget(self.labelDL)
 
@@ -70,7 +76,7 @@ class DownloadManager(PyQt5.QtCore.QObject):
 
     
     def appendRawFic(self, chapOneURL):
-        
+     
         url_ = QtCore.QUrl(chapOneURL)
         req = QtNetwork.QNetworkRequest(url_)
         self.initialDownloadReply = self.manager.get(req) # QNetworkReply
@@ -90,9 +96,14 @@ class DownloadManager(PyQt5.QtCore.QObject):
 
     #--- SLOTS --
     def handleInitialDownloadFinished(self):
+        
+        # QByteArray type
+        firstChapterData =  self.initialDownloadReply.readAll()
+        pythonString = str(firstChapterData, "utf-8") 
+        pythonString = self.getDecompressed( pythonString )
 
-        firstChapterData = self.initialDownloadReply.readAll()
-        data_string = str(firstChapterData, "utf-8")
+        #data_string = str(firstChapterData, "utf-8")
+        data_string = pythonString
         
         par = FicParser.FicParser(data_string)
         
@@ -110,7 +121,7 @@ class DownloadManager(PyQt5.QtCore.QObject):
         self.abstractFicQueue.put(fic_dl_model)
         self.initialDownloadReply.deleteLater()
 
-        print("INIT DOWNLOAD HANDLED")
+        #print("INIT DOWNLOAD HANDLED")
 
     def startNextFicDownload(self):
 
@@ -173,4 +184,28 @@ class DownloadManager(PyQt5.QtCore.QObject):
         self.startNextDownload()
 
     def downloadReadyRead(self):
-        self.outputFile.write(self.currentDownloadReply.readAll())
+        data = self.currentDownloadReply.readAll()
+        pythonString = str(data, "utf-8")
+        pythonString = self.getDecompressed(pythonString)
+        # inefficient
+        data = QtCore.QByteArray(bytes(pythonString, "utf-8")) 
+        self.outputFile.write( data )
+
+
+    def getDecompressed(self, data):
+
+        if self.checkIfCompressed(data):
+            print("GZIP COMPRESSION DETECTED!")
+            return zlib.decompress(data, 16 + zlib.MAX_WBITS)
+
+        return data
+
+    def checkIfCompressed(self, data):
+
+        # check first two bytes
+        initialBytes = bytes(data[:2], "utf-8")
+        
+        return initialBytes[0] == 0x1f  and initialBytes[1] == 0x8b
+    
+
+
