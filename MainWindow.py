@@ -2,7 +2,7 @@
 
 from PyQt5.QtCore import Qt
 from PyQt5 import QtCore, QtWidgets, QtGui
-import const 
+import config.const as const
 from network.DownloadManager import DownloadManager
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -21,14 +21,17 @@ class MainWindow(QtWidgets.QMainWindow):
         # tab 3 - Downloading stuff stuff
         self.tabDlContainer = QtWidgets.QWidget()
         self.tabDlLayout = QtWidgets.QGridLayout()
+        self.tabDlFicContainer = QtWidgets.QWidget()
+        self.tabDlFicLayout = QtWidgets.QVBoxLayout()
 
         self.urlBar = QtWidgets.QLineEdit()
-        self.butDownloadFic = QtWidgets.QPushButton("&Download Fic", self);
+        self.butDownloadFic = QtWidgets.QPushButton("&Add to Queue", self)
+        self.butActualDownload = QtWidgets.QPushButton("&Download All", self)
+        self.listDownloadFicWidgets = []
         
         
         # Other stuff
-        self.downloadManager = DownloadManager()
-
+        self.downloadManager = DownloadManager(self)
       
         self.initializeGUI()
     
@@ -54,20 +57,41 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle("ForWantOfANail")
         self.setMinimumSize(*const.MIN_WIN_DIMENSIONS)
 
+    def addFicDownloadWidget(self, widget):
+        # the download manager should handle the updating
+        self.tabDlFicLayout.addWidget(widget)
+
+
     def createDownloadBar(self):
 
         self.tabDlContainer.setLayout(self.tabDlLayout)
+        self.tabDlFicContainer.setLayout(self.tabDlFicLayout)
+         
+        self.tabDlFicContainer.setStyleSheet("background-color:#" + const.COLOR_DL_QUEUE + ";")
+        self.tabDlLayout.setVerticalSpacing(0)
+        self.tabDlFicLayout.setSpacing(0)
+
         self.tabDlLayout.addWidget(self.urlBar, 0, 0, Qt.AlignTop)
         self.tabDlLayout.addWidget(self.butDownloadFic, 0, 1, 
                 Qt.AlignTop)
+        self.tabDlLayout.addWidget(self.butActualDownload, 1, 1, Qt.AlignTop)
+
+        self.tabDlLayout.addWidget(self.tabDlFicContainer, 2, 0)
 
         # button.released is a PYQT_SIGNAL
         self.butDownloadFic.released.connect(self.handleFicDownload)
+        self.butActualDownload.released.connect(self.handleActualDownload)
 
         return self.tabDlContainer
 
 
     def handleFicDownload(self):
-    
+        text = self.urlBar.text()
+        if text == "":
+            pass
+
         self.downloadManager.appendRawFic(self.urlBar.text())
+
+    def handleActualDownload(self):
+        self.downloadManager.startDownloads()
 

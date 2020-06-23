@@ -10,7 +10,7 @@ class FicParser:
         self.soup =  bs4.BeautifulSoup(htmlContent, "html.parser")
 
 
-    def getMetadata(self):
+    def constructMetadata(self):
 
         #<span class='xgray xcontrast_txt'>Rated: <a class='xcontrast_txt' href='https://www.fictionratings.com/' target='rating'>Fiction  T</a> - English - Adventure/Humor -  Harry P. - Chapters: 10   - Words: 40,849 - Reviews: <a href='/r/4390285/'>1,070</a> - Favs: 2,874 - Follows: 3,062 - Updated: <span data-xutime='1244652529'>6/10/2009</span> - Published: <span data-xutime='1215902997'>7/12/2008</span> - id: 4390285 </span>
         
@@ -120,13 +120,20 @@ class FicParser:
         
        
         modelObject.numChapters = len(modelObject.chapterTitles)
-
-        mainStoryDiv = self.soup.select("div.storytextp")[0]
         
-        print("HARAM WARNING")
-        print (vars(modelObject))
+        """
+        mainStoryDiv = self.soup.select("div.storytextp")[0]
 
-        print("MAIN STORY: ", mainStoryDiv)
+        ficModel = StoryModel.FanficModel()
+        ficModel.metadata = modelObject
+        ficModel.storyHTML = str(mainStoryDiv)
+
+        ficModel.setRealFolder()
+        """
+
+        return modelObject
+        
+
 
     def extractUserID(self, profileURL):
         # /u/1602381/Shadow-Rebirth

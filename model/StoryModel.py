@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+import config.const as const
+import pickle
+import os
+
 class IncompleteMetadataException(Exception):
     pass
 
@@ -59,19 +63,53 @@ class StoryMetadata:
     '''
 
 
+
 class FanficModel:
     
     def __init__(self):
 
         self.metadata = None
-        self.storyHTML = None
-
-        self.realFolder = None
         
-        # For in-app
-        self.ficFolder = None
-        self.tags = []
+        self.realDirectory = None
+        self.realFiles = []
+        
+        # For in-app classification; pun fully intended
+        self.ficPath = []
+        self.tags = set()
 
+    def addTag(self, tag):
+        self.tags.add(tag)
+
+    def addFilePath(self, path):
+        self.realFiles.append(path)
+        
+    def getCleanPrefix(self):
+        return self.metadata.title.replace(" ", "_").replace("'", "_")
+
+    def setRealDirectory(self):
+        self.realDirectory = policyGetRealFolder(self.metadata)
 
     def getMetadata(self):
         return metadata
+    
+    def dumpToDisk(self):
+
+        path  = const.DEFAULT_META_PATH
+        path = os.path.join(path, policyGetRealFolder(self.metadata) + ".ffmdata") 
+
+        with open(path, "wb") as fi:
+            pickle.dump(self, fi)
+
+
+
+def policyGetRealFolder(fanficMetadata):
+    ''' 
+    if fanficMetadata.crossover:
+        name = "crossover"
+    else:
+        name = fanficMetadata.fandom.replace(" ", "_")
+    '''
+    name = fanficMetadata.title.replace(" ", "_")
+    name = name.replace("'", "_")
+
+    return name + "_" + fanficMetadata.storyID
