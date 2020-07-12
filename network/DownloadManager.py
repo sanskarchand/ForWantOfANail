@@ -11,7 +11,7 @@ import model.StoryModel as StoryModel
 import queue
 import os
 import zlib
-from parser import FicParser
+from ficparser import FicParser
 
 class FicDownloadModel:
 

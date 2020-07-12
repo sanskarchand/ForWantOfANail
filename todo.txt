@@ -1,0 +1,13 @@
+Wed 24 Jun 2020 11:16:42 PM +0545
+
+1)=> decoding fails from gzip, incomplete data
+    works sometimes
+
+2)=> drop-down selection list [done] and fic image download 
+
+Mon 13 Jul 2020 12:39:09 AM +0545
+New todo:
+    1. Fic Image Download
+    2. Separate page for fic - see details, modify tags
+    3. Update if new chapters available
+    4. Add delay between downloads to be bandwidth-polite

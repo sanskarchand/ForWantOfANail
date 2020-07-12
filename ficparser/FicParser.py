@@ -68,6 +68,9 @@ class FicParser:
             6 -> - id: [num] ( if complete, - Status: Complete - id: [num] )
         """
 
+        # Sci-Fi genere -> problems
+        payload_children[2] = payload_children[2].replace("Sci-Fi", "SciFi")
+
         isOneShot = "Updated" not in payload_children[4]
        
         modelObject.title = titles[0].text
@@ -105,6 +108,7 @@ class FicParser:
                 else:
                     modelObject.characterList.extend( index2_list[3].split(",") )
 
+                print("Li = ", index2_list)
                 modelObject.numChapters = numFromStringFunc( extractKeyFunc(index2_list[4]) )
                 modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[5]) )
 

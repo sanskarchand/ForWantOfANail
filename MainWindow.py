@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5 import QtCore, QtWidgets, QtGui
 import config.const as const
 from network.DownloadManager import DownloadManager
-from parser import FicParser
+from ficparser import FicParser
 import FicCard
 import os, pickle
 
@@ -30,6 +30,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.nextChapButton = QtWidgets.QPushButton()
         self.textInfoLabel = QtWidgets.QLabel("<NO TEXT>")
+        self.chaptersComboBox = QtWidgets.QComboBox()
         self.prevChapButton = QtWidgets.QPushButton()
 
         self.htmlTextBrowser = QtWidgets.QTextBrowser()
@@ -96,16 +97,20 @@ class MainWindow(QtWidgets.QMainWindow):
         self.prevChapButton.setIcon(style_1.standardIcon(QtWidgets.QStyle.SP_ArrowLeft))
         self.nextChapButton.setIcon(style_1.standardIcon(QtWidgets.QStyle.SP_ArrowRight))
 
+        self.chaptersComboBox.setMinimumWidth(const.MIN_DROP_DOWN_WIDTH)
+
         #connect
         self.prevChapButton.released.connect(self.handleNavPrevPage)
         self.nextChapButton.released.connect(self.handleNavNextPage)
+        self.chaptersComboBox.currentIndexChanged.connect(self.handleChangeDropDownTitle)
 
         # html alignment
         self.htmlTextBrowser.setAlignment(Qt.AlignLeft)
 
-        self.readNavWidgetLayout.addWidget(self.prevChapButton, 0, 0, Qt.AlignLeft)
         self.readNavWidgetLayout.addWidget(self.textInfoLabel, 0, 1, Qt.AlignHCenter)
-        self.readNavWidgetLayout.addWidget(self.nextChapButton, 0, 2, Qt.AlignRight)
+        self.readNavWidgetLayout.addWidget(self.prevChapButton, 1, 0, Qt.AlignLeft)
+        self.readNavWidgetLayout.addWidget(self.chaptersComboBox, 1, 1, Qt.AlignHCenter)
+        self.readNavWidgetLayout.addWidget(self.nextChapButton, 1, 2, Qt.AlignRight)
 
         self.splitter.addWidget(self.readNavWidget)
         self.splitter.addWidget(self.htmlTextBrowser)
@@ -165,6 +170,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def handleFicPopulate(self):
 
         target_files = os.listdir(const.DEFAULT_META_PATH)
+        tempLoadedFicModels = []
 
         for filename in target_files:
             
@@ -176,10 +182,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 with open(path, "rb") as fi:
                     ficModel = pickle.load(fi)
 
-                    self.loadedFicModels.append(ficModel)
-        
+                    if ficModel not in self.loadedFicModels:
+                        tempLoadedFicModels.append(ficModel)
+       
+        self.loadedFicModels.extend(tempLoadedFicModels)
 
-        for idx, model in enumerate(self.loadedFicModels):
+        for idx, model in enumerate(tempLoadedFicModels):
             widget = FicCard.FicCard(self, model)
             row, col = self.getGridCoordsFromIndex(idx)
             self.tabLibCardContainerLayout.addWidget(widget, row, col)
@@ -217,6 +225,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setReadingPage(self.currentReadingChapterIndex)
 
 
+    def handleChangeDropDownTitle(self, index):
+        self.setReadingPage(index)
 
     # --- utils
 
@@ -233,15 +243,21 @@ class MainWindow(QtWidgets.QMainWindow):
     def setReadingPage(self, index):
         self.currentReadingChapterIndex = index
         self.setReadingHTML(self.currentReadingFic.realFiles[index])
-
+        
+        self.chaptersComboBox.setCurrentIndex(index)
         ficName = self.currentReadingFic.metadata.title
-        chapName = self.currentReadingFic.metadata.chapterTitles[index]
+        #chapName = self.currentReadingFic.metadata.chapterTitles[index]
 
-        label_text = ficName + "\n" + chapName
+        label_text = ficName #+ "\n" + chapName
         self.textInfoLabel.setText(label_text)
 
     def setReadingFic(self, ficModel):
         self.currentReadingFic = ficModel
+
+        #populate combobox
+        self.chaptersComboBox.clear()
+        for title in self.currentReadingFic.metadata.chapterTitles:
+            self.chaptersComboBox.addItem(title)
         #self.currentReadingChapterIndex = 0
         self.setReadingPage(0)
         #self.setReadingHTML(self.currentReadingFic.realFiles[0])

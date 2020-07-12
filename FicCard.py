@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
+from PyQt5.Qt import QMenu
 from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets
-from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtGui import QPalette, QColor 
 
 import config.const as const 
-
 class FicCard(QtWidgets.QWidget):
 
     def __init__(self, refMainLayout, ficModel):
@@ -33,24 +33,43 @@ class FicCard(QtWidgets.QWidget):
 
         self.labelAuthor = QtWidgets.QLabel("By " + ficModel.metadata.author)
         self.labelAuthor.setStyleSheet("font-style: italic;")
+        
+        tag_string = "Tags: " + ", ".join(ficModel.getTagList())
+        self.labelTags = QtWidgets.QLabel(tag_string)
+
 
 
         self.layout.addWidget(self.labelTitle)
         self.layout.addWidget(self.labelFandom)
         self.layout.addWidget(self.labelAuthor)
+        self.layout.addWidget(self.labelTags)
 
         self.refMainLayout  = refMainLayout
         self.ficModel = ficModel
-
+        
+        self.menu = QMenu(self)
+        #self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.action_tags = self.menu.addAction("Edit Tags")
+    
     def setBgColor(self, col_tuple):
         myPalette = self.palette()
         bgColor = QColor(*col_tuple)
         myPalette.setColor(QPalette.Background, bgColor)
         self.setPalette(myPalette)
- 
+    
     def mousePressEvent(self, event):
+        if event.buttons() != Qt.LeftButton:
+            return
         self.setBgColor(const.COL_TUPLE_FIC_CARD_PRESSED)
 
     def mouseReleaseEvent(self, event):
         self.refMainLayout.setReadingFic(self.ficModel)
         self.setBgColor(const.COL_TUPLE_FIC_CARD)
+    # Context menu policy
+    def contextMenuEvent(self, event):
+        action = self.menu.exec_(self.mapToGlobal(event.pos()))
+
+    def refreshCards(self):
+        pass
+
+

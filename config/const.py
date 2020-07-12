@@ -2,7 +2,7 @@ from enum import Enum
 import os
 
 MIN_WIN_DIMENSIONS = (800, 600)
-
+MIN_DROP_DOWN_WIDTH = 120
 # relative to main folder
 DEFAULT_PATH = "fics"
 DEFAULT_META_PATH = os.path.join(DEFAULT_PATH, "metadata")
@@ -14,6 +14,8 @@ COLOR_DL_QUEUE = "#B1B1B1"
 COLOR_FIC_CARD = "#4B5E6B"
 COL_TUPLE_FIC_CARD = (177, 174, 176)
 COL_TUPLE_FIC_CARD_PRESSED = (120, 118, 126)
+
+
 
 class FicNetStatus(Enum):
     INITIATED = 0
