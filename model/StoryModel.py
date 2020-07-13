@@ -45,6 +45,9 @@ class StoryMetadata:
         self.publishedTimestamp = None
         self.publishedDateString = None
 
+        self.imgUrlPath = "";
+        self.hasImg = False;
+
     def verifySoundness(self):
         
         for k, v in vars(self).items():

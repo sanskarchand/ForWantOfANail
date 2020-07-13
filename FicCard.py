@@ -23,10 +23,10 @@ class FicCard(QtWidgets.QWidget):
         self.setAutoFillBackground(True)
 
         self.labelTitle = QtWidgets.QLabel(ficModel.metadata.title)
-        self.labelTitle.setStyleSheet("font-weight: strong;")
+        self.labelTitle.setStyleSheet("font-weight: bold;")
         
         if ficModel.metadata.crossover:
-            label = ficModel.metadata.fandomsCrossover[0] + " and " + ficModel.fandomsCrossover[1] + " crossover"
+            label = ficModel.metadata.fandomsCrossover[0] + " and " + ficModel.metadata.fandomsCrossover[1] + " crossover"
             self.labelFandom = QtWidgets.QLabel(label)
         else:
             self.labelFandom = QtWidgets.QLabel(ficModel.metadata.fandom)
@@ -68,6 +68,8 @@ class FicCard(QtWidgets.QWidget):
     # Context menu policy
     def contextMenuEvent(self, event):
         action = self.menu.exec_(self.mapToGlobal(event.pos()))
+        if action == self.action_tags:
+            self.refMainLayout.showFicDetails(self.ficModel)
 
     def refreshCards(self):
         pass

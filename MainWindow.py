@@ -6,6 +6,7 @@ import config.const as const
 from network.DownloadManager import DownloadManager
 from ficparser import FicParser
 import FicCard
+import FicMain
 import os, pickle
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -38,6 +39,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # tab 2-  library stuff
         self.tabLibContainer = QtWidgets.QWidget()
         self.tabLibCardContainer = QtWidgets.QWidget()
+
         self.tabLibContainerLayout = QtWidgets.QGridLayout()
         self.tabLibCardContainerLayout = QtWidgets.QGridLayout()
         self.butPopulateLibrary = QtWidgets.QPushButton("&Populate", self)
@@ -54,6 +56,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.butDownloadFic = QtWidgets.QPushButton("&Add to Queue", self)
         self.butActualDownload = QtWidgets.QPushButton("&Download All", self)
         self.listDownloadFicWidgets = []
+
+        # tab 4- temporary, for 
+        self.tabFicDetailsContainer = QtWidgets.QWidget()
+        self.tabFicDetailsLayout = QtWidgets.QVBoxLayout()
         
         
         # Other stuff
@@ -69,10 +75,12 @@ class MainWindow(QtWidgets.QMainWindow):
         container_1 = self.createReadingTab()
         container_2 = self.createLibraryTab()
         container_3 = self.createDownloadTab()
+        container_4 = self.createDetailsTab()
 
         self.tabWidget.addTab(container_1, "Read")
         self.tabWidget.addTab(container_2, "Library")
         self.tabWidget.addTab(container_3, "Download Manager")
+        self.tabWidget.addTab(container_4, "Fic Details")
         # -- TAB INITIALIZATION -- #
 
         self.centralLayout.addWidget(self.tabWidget, 0, 0)
@@ -149,6 +157,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tabLibContainer.setLayout(self.tabLibContainerLayout)
         self.tabLibContainerLayout.setVerticalSpacing(0)
         self.tabLibContainerLayout.setAlignment(Qt.AlignTop)
+        
 
         self.tabLibCardContainer.setLayout(self.tabLibCardContainerLayout)
         self.tabLibCardContainerLayout.setVerticalSpacing(5)
@@ -163,6 +172,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         
         return self.tabLibContainer
+    
+    def createDetailsTab(self):
+        self.tabFicDetailsContainer.setLayout(self.tabFicDetailsLayout)
+        return self.tabFicDetailsContainer
 
 
     #--- SIGNALS --
@@ -230,6 +243,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # --- utils
 
+    def showFicDetails(self, ficModel):
+        #self.tabFicDetails = FicMain.FicDescriptionWidget(ficModel)
+        child = self.tabFicDetailsLayout.takeAt(0)
+        if child and child.widget() is not None:
+            child.widget().deleteLater()
+
+        self.tabFicDetailsLayout.addWidget(FicMain.FicDescriptionWidget(ficModel))
+        self.tabFicDetailsLayout.update()
+        self.tabWidget.setCurrentIndex(3)
+
     def setReadingHTML(self, file_path):
 
         with open(file_path, "r") as f:
@@ -260,7 +283,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.chaptersComboBox.addItem(title)
         #self.currentReadingChapterIndex = 0
         self.setReadingPage(0)
+        self.tabWidget.setCurrentIndex(0)
         #self.setReadingHTML(self.currentReadingFic.realFiles[0])
+
+    
 
 
     def getGridCoordsFromIndex(self, index):

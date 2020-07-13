@@ -140,6 +140,8 @@ class DownloadManager(PyQt5.QtCore.QObject):
         for chap_num in range(1, self.currentFic.chapters + 1):
             url = "https://www.fanfiction.net/s/{}/{}".format(self.currentFic.storyID, chap_num)
             self.currentFic.urlQueue.put(url)
+        if self.currentFic.ficModel.metadata.hasImage:
+            self.currentFic.urlQueue.put(self.currentFic.ficModel.metadata.imgUrlPath)
 
         self.startNextDownload()
 
@@ -150,31 +152,47 @@ class DownloadManager(PyQt5.QtCore.QObject):
         curr_queue = self.currentFic.urlQueue
 
         if curr_queue.empty():
+            print("Dumping...")
             self.currentFic.status = const.FicNetStatus.COMPLETED
             self.currentFic.ficModel.dumpToDisk()
             self.startNextFicDownload()
             return
 
-
+        is_image = False 
         nextURL = curr_queue.get()
+        # REM this may not be a guarantee
+        if "cdn" in nextURL and "image" in nextURL:
+            is_image = True
+
         myPrefix = self.currentFic.ficModel.getCleanPrefix()
         myFolder = self.currentFic.ficModel.realDirectory
         myPath = os.path.join(const.DEFAULT_FILE_PATH, myFolder)
+       
+
         myFilename = myPrefix + "__Ch-" + str(self.currentFic.downloaded + 1) + ".html"
+        if is_image:
+            myFilename = self.currentFic.ficModel.realDirectory+ "__image.jpg"
+
         
         fullPath = os.path.join(myPath, myFilename)
-
-        self.currentFic.ficModel.addFilePath(fullPath)
+        
+        # only add html files to the list of real file paths
+        if not is_image:
+            self.currentFic.ficModel.addFilePath(fullPath)
+        else:
+            self.currentFic.ficModel.imageFilePath = fullPath 
 
         self.outputFile.setFileName(fullPath)
         self.outputFile.open(QtCore.QFile.WriteOnly)
 
         req = QtNetwork.QNetworkRequest(QtCore.QUrl(nextURL))
         self.currentDownloadReply = self.manager.get(req)
-        self.currentDownloadReply.finished.connect(self.downloadFinished)
-        self.currentDownloadReply.readyRead.connect(self.downloadReadyRead)
-
-
+        if not is_image:
+            self.currentDownloadReply.readyRead.connect(self.downloadReadyRead)
+            self.currentDownloadReply.finished.connect(self.downloadFinished)
+        else:
+            self.currentDownloadReply.readyRead.connect(self.downloadReadyReadImage)
+            self.currentDownloadReply.finished.connect(self.downloadFinishedImage)
 
 
     def downloadFinished(self):
@@ -182,6 +200,11 @@ class DownloadManager(PyQt5.QtCore.QObject):
         self.currentFic.downloaded += 1
         self.currentFic.update()
         self.startNextDownload()
+    
+    def downloadFinishedImage(self):
+        self.outputFile.close()
+        self.startNextDownload()
+
 
     def downloadReadyRead(self):
         data = self.currentDownloadReply.readAll()
@@ -189,6 +212,10 @@ class DownloadManager(PyQt5.QtCore.QObject):
         pythonString = self.getDecompressed(pythonString)
         # inefficient
         data = QtCore.QByteArray(bytes(pythonString, "utf-8")) 
+        self.outputFile.write( data )
+
+    def downloadReadyReadImage(self):
+        data = self.currentDownloadReply.readAll()
         self.outputFile.write( data )
 
 

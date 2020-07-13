@@ -1,5 +1,6 @@
 Dependencies:
 * Qt5
+* html5lib 
 
 ### Current Capabilites:
 * Downloading stories
@@ -7,7 +8,8 @@ Dependencies:
 * Rudimentary Reading
 
 ## To add:
-* Custom tagging and searching
+* Custom tagging and filtering [in-progress]
+* Bulk downloads
 
 
 ### Screenshot(s)

@@ -37,8 +37,18 @@ class FicParser:
         
         titles =  self.soup.findAll("b", {"class": "xcontrast_txt"})
         summ = self.soup.findAll("div", {"class": "xcontrast_txt"})
-        image_tag = self.soup.findAll("img", attrs={"data-original"}) #<REM>
-        
+        #image_tag = self.soup.findAll("div", attrs={"data-original"}) #<REM>
+        image_tag = self.soup.findAll("img", {"class": "cimage"})[0]
+        image_link = "" 
+        has_image = False 
+        if image_tag.has_attr("data-original"):
+            has_image = True
+            image_link = image_tag["data-original"]
+            print("image_link: ", image_link)
+
+
+
+
         links = self.soup.findAll("a", {"class": "xcontrast_txt"})
         author_link = None
         for link in links:
@@ -51,6 +61,9 @@ class FicParser:
         payload_children = list(huge_payload[0].children)
 
         modelObject = StoryModel.StoryMetadata()
+        modelObject.hasImage = has_image
+        modelObject.imgUrlPath = "https://" + image_link[2:]
+        
         """
         Parse the payload: Has 9 children;
         Indices:
@@ -93,6 +106,12 @@ class FicParser:
         numFromStringFunc = lambda num_str: int(num_str.replace(",", ""))
         
         modelObject.genreList = index2_list[2].split("/")
+        if "Hurt" in modelObject.genreList:
+            ind = modelObject.genreList.index("Hurt")
+            modelObject.genreList.pop(ind)  # pop 'Hurt'
+            modelObject.genreList.pop(ind)  # pop 'Comfort'
+            modelObject.genreList.insert(ind, "Hurt/Comfort")
+
 
         # Parsing decision depends on existence of character list, which in turn depends on 
         #   whether the fic is a oneshot

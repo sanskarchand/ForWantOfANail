@@ -1,13 +1,22 @@
+Mon 13 Jul 2020 10:31:02 PM +0545
+Todo:
+1. Bandwidth politeness
+2. Actually edit, save tags
+3. Add filters (tags, fandoms, dates)
+4. Download all stories or favourites of a particular profile
+5. Save metadata to XML (for other applications, if needed)
+
+----------------
 Wed 24 Jun 2020 11:16:42 PM +0545
 
 1)=> decoding fails from gzip, incomplete data
-    works sometimes
+    works sometimes [done with errors][infrequent errors, must investigate]
 
 2)=> drop-down selection list [done] and fic image download 
 
 Mon 13 Jul 2020 12:39:09 AM +0545
 New todo:
-    1. Fic Image Download
-    2. Separate page for fic - see details, modify tags
-    3. Update if new chapters available
-    4. Add delay between downloads to be bandwidth-polite
+    1. Fic Image Download [done]
+    2. Separate page for fic - see details, modify tags [done, need to save tags]
+    3. Update if new chapters available [not done]
+    4. Add delay between downloads to be bandwidth-polite [not done]

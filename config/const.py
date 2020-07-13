@@ -5,8 +5,10 @@ MIN_WIN_DIMENSIONS = (800, 600)
 MIN_DROP_DOWN_WIDTH = 120
 # relative to main folder
 DEFAULT_PATH = "fics"
+RES_PATH = "res"
 DEFAULT_META_PATH = os.path.join(DEFAULT_PATH, "metadata")
 DEFAULT_FILE_PATH = os.path.join(DEFAULT_PATH, "files")
+RES_NOIMG_PATH = os.path.join(RES_PATH, "noimg.jpg")
 
 SPECIAL_CHARS =" ',?:"
 
