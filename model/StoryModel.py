@@ -121,6 +121,8 @@ class FanficModel:
         # For in-app classification; pun fully intended
         self.ficPath = []
         self.tags = set()
+    def __eq__(self, otherModel):
+        return self.metadata.storyID == otherModel.metadata.storyID
 
     def addTag(self, tag):
         self.tags.add(tag)

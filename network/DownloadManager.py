@@ -155,6 +155,7 @@ class DownloadManager(PyQt5.QtCore.QObject):
             print("Dumping...")
             self.currentFic.status = const.FicNetStatus.COMPLETED
             self.currentFic.ficModel.dumpToDisk()
+            self.mainGUI.handleFicPopulate()
             self.startNextFicDownload()
             return
 
@@ -188,24 +189,36 @@ class DownloadManager(PyQt5.QtCore.QObject):
         req = QtNetwork.QNetworkRequest(QtCore.QUrl(nextURL))
         self.currentDownloadReply = self.manager.get(req)
         if not is_image:
-            self.currentDownloadReply.readyRead.connect(self.downloadReadyRead)
+            #self.currentDownloadReply.readyRead.connect(self.downloadReadyRead)
             self.currentDownloadReply.finished.connect(self.downloadFinished)
         else:
-            self.currentDownloadReply.readyRead.connect(self.downloadReadyReadImage)
+            #self.currentDownloadReply.readyRead.connect(self.downloadReadyReadImage)
             self.currentDownloadReply.finished.connect(self.downloadFinishedImage)
 
 
     def downloadFinished(self):
+
+        data = self.currentDownloadReply.readAll()
+        pythonString = str(data, "utf-8")
+        pythonString = self.getDecompressed(pythonString)
+        # inefficient
+        data = QtCore.QByteArray(bytes(pythonString, "utf-8")) 
+        self.outputFile.write( data )
+
         self.outputFile.close()
         self.currentFic.downloaded += 1
         self.currentFic.update()
         self.startNextDownload()
     
     def downloadFinishedImage(self):
+        
+        data = self.currentDownloadReply.readAll()
+        self.outputFile.write( data )
+
         self.outputFile.close()
         self.startNextDownload()
 
-
+    '''
     def downloadReadyRead(self):
         data = self.currentDownloadReply.readAll()
         pythonString = str(data, "utf-8")
@@ -217,7 +230,7 @@ class DownloadManager(PyQt5.QtCore.QObject):
     def downloadReadyReadImage(self):
         data = self.currentDownloadReply.readAll()
         self.outputFile.write( data )
-
+    '''
 
     def getDecompressed(self, data):
 

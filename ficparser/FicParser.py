@@ -2,6 +2,7 @@
 
 import bs4
 from model import StoryModel
+import config.const as const
 
 class FicParser:
 
@@ -184,6 +185,7 @@ class FicParser:
             fandom1 = liste[0]
             fandom2 = liste[1].split(" ")[1]
             modelObject.fandomsCrossover.extend([fandom1, fandom2])
+            modelObject.fandom = const.FANDOM_CROSSOVER
 
         else:
             modelObject.category = path[0]

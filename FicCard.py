@@ -24,6 +24,7 @@ class FicCard(QtWidgets.QWidget):
 
         self.labelTitle = QtWidgets.QLabel(ficModel.metadata.title)
         self.labelTitle.setStyleSheet("font-weight: bold;")
+        self.labelTitle.setWordWrap(True)
         
         if ficModel.metadata.crossover:
             label = ficModel.metadata.fandomsCrossover[0] + " and " + ficModel.metadata.fandomsCrossover[1] + " crossover"
@@ -33,9 +34,11 @@ class FicCard(QtWidgets.QWidget):
 
         self.labelAuthor = QtWidgets.QLabel("By " + ficModel.metadata.author)
         self.labelAuthor.setStyleSheet("font-style: italic;")
+        self.labelAuthor.setWordWrap(True)
         
         tag_string = "Tags: " + ", ".join(ficModel.getTagList())
         self.labelTags = QtWidgets.QLabel(tag_string)
+        self.labelTags.setWordWrap(True)
 
 
 

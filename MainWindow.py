@@ -42,7 +42,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.tabLibContainerLayout = QtWidgets.QGridLayout()
         self.tabLibCardContainerLayout = QtWidgets.QGridLayout()
-        self.butPopulateLibrary = QtWidgets.QPushButton("&Populate", self)
+        self.filterAreaWidget = QtWidgets.QWidget()
+        self.filterAreaLayout = QtWidgets.QHBoxLayout()
+        self.filterFandomComboBoxLabel = QtWidgets.QLabel("Fandom:")
+        self.filterFandomComboBox = QtWidgets.QComboBox()
+        self.filterTagsEditLabel = QtWidgets.QLabel("Tags:")
+        self.filterTagsEdit = QtWidgets.QLineEdit()
+        self.filterTagsEditCompleter = None#QtWidgets.QCompleter()
+        self.butFilterFics = QtWidgets.QPushButton("Filter")
+        self.butPopulateLibrary = QtWidgets.QPushButton("&Populate")
 
         self.tabLibScrollArea = QtWidgets.QScrollArea()
 
@@ -66,6 +74,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.downloadManager = DownloadManager(self)
       
         self.initializeGUI()
+
+        self.postInitialization()
+
     
     def initializeGUI(self):
         
@@ -162,25 +173,69 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tabLibCardContainer.setLayout(self.tabLibCardContainerLayout)
         self.tabLibCardContainerLayout.setVerticalSpacing(5)
         self.tabLibCardContainerLayout.setAlignment(Qt.AlignTop)
-        
+
         self.tabLibScrollArea.setWidget(self.tabLibCardContainer)
         self.tabLibScrollArea.setWidgetResizable(True)
 
-        self.tabLibContainerLayout.addWidget(self.butPopulateLibrary, 0, 0)
+        self.filterAreaWidget.setLayout(self.filterAreaLayout)
+        self.filterAreaLayout.addWidget(self.filterFandomComboBoxLabel)
+        self.filterAreaLayout.addWidget(self.filterFandomComboBox)
+        self.filterAreaLayout.addWidget(self.filterTagsEditLabel)
+        self.filterAreaLayout.addWidget(self.filterTagsEdit)
+        self.filterAreaLayout.addWidget(self.butFilterFics)
+        self.filterAreaLayout.addWidget(self.butPopulateLibrary)
+
+
+        self.tabLibContainerLayout.addWidget(self.filterAreaWidget, 0, 0)
+        #self.tabLibContainerLayout.addWidget(self.butPopulateLibrary, 0, 1)
         self.tabLibContainerLayout.addWidget(self.tabLibScrollArea, 1, 0)
         self.butPopulateLibrary.released.connect(self.handleFicPopulate)
 
+        self.butFilterFics.released.connect(self.handleFicFilter)
         
         return self.tabLibContainer
     
     def createDetailsTab(self):
         self.tabFicDetailsContainer.setLayout(self.tabFicDetailsLayout)
         return self.tabFicDetailsContainer
+    
+
+    def postInitialization(self):
+
+        if not os.path.exists(const.DEFAULT_META_PATH):
+            os.makedirs(const.DEFAULT_META_PATH)
+        if not os.path.exists(const.DEFAULT_FILE_PATH):
+            os.makedirs(const.DEFAULT_FILE_PATH)
+
+        self.handleFicPopulate()
+        self.resetFilterElements()
+        self.tabWidget.setCurrentIndex(1)
+
+    def resetFilterElements(self):
+        self.filterFandomComboBox.clear()
+
+        fandom_set = set()
+        tag_set = set()
+        for fic in self.loadedFicModels:
+            fandom_set.add(fic.metadata.fandom)
+            tag_set.union(fic.tags)
+        
+        fandom_list = list(fandom_set)
+        fandom_list.sort()
+        # filter for all fandoms at top | effectively a non-filter
+        fandom_list.insert(0, const.FANDOM_ALL)
+
+        self.filterFandomComboBox.addItems(fandom_list)
+        self.filterTagsEditCompleter = QtWidgets.QCompleter(list(tag_set), self)
+        self.filterTagsEdit.setCompleter(self.filterTagsEditCompleter)
 
 
     #--- SIGNALS --
 
     def handleFicPopulate(self):
+
+        self.clearLayout(self.tabLibCardContainerLayout)
+
 
         target_files = os.listdir(const.DEFAULT_META_PATH)
         tempLoadedFicModels = []
@@ -194,18 +249,45 @@ class MainWindow(QtWidgets.QMainWindow):
                 
                 with open(path, "rb") as fi:
                     ficModel = pickle.load(fi)
-
+                    
+                    # due to __eq__ magic method in FanficModel
                     if ficModel not in self.loadedFicModels:
                         tempLoadedFicModels.append(ficModel)
-       
+        
         self.loadedFicModels.extend(tempLoadedFicModels)
-
-        for idx, model in enumerate(tempLoadedFicModels):
+        
+        for idx, model in enumerate(self.loadedFicModels):
             widget = FicCard.FicCard(self, model)
             row, col = self.getGridCoordsFromIndex(idx)
             self.tabLibCardContainerLayout.addWidget(widget, row, col)
 
+        self.resetFilterElements()
 
+    def handleFicFilter(self):
+        self.clearLayout(self.tabLibCardContainerLayout)
+
+        fics = self.loadedFicModels
+        
+        index = self.filterFandomComboBox.currentIndex()
+        fi_fandom = self.filterFandomComboBox.itemText(index)
+        fi_tags = self.filterTagsEdit.text().lstrip().rstrip()
+        if fi_tags != '':
+            fi_tags = set(fi_tags.split(" "))
+        else:
+            fi_tags = set([])
+
+
+        if fi_fandom != '' and fi_fandom != const.FANDOM_ALL:
+            fics = [fic for fic in fics if fic.metadata.fandom == fi_fandom or fi_fandom in fic.metadata.fandomsCrossover]
+
+        if fi_tags:
+            fics = [fic for fic in fics if fi_tags.issubset(fic.tags)]
+
+
+        for idx, model in enumerate(fics):
+            widget = FicCard.FicCard(self, model)
+            row, col = self.getGridCoordsFromIndex(idx)
+            self.tabLibCardContainerLayout.addWidget(widget, row, col)
 
 
 
@@ -295,7 +377,14 @@ class MainWindow(QtWidgets.QMainWindow):
         col = index % 3
 
         return (row, col)
-
         
-
+    def clearLayout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    self.clearLayout(item.layout())
 

@@ -41,6 +41,13 @@ class FicDescriptionWidget(QtWidgets.QWidget):
         self.editTagsButton = QtWidgets.QPushButton("Save Tags")
         self.editTagsButton.released.connect(self.handleSaveTags)
 
+        text = "" 
+        for ind, tag in enumerate(ficModel.tags):
+            text += tag
+            if ind != len(ficModel.tags) - 1:
+                text += "\n"
+        self.editTagsArea.setPlainText(text)
+
 
         #-- LEFT SIDE ---
         self.imageLabel = QtWidgets.QLabel()
@@ -107,5 +114,11 @@ class FicDescriptionWidget(QtWidgets.QWidget):
 
     # signals
     def handleSaveTags(self):
-        pass
+        data = self.editTagsArea.toPlainText()
+        tags = set(data.split("\n"))
+
+        if tags != self.ficModel.tags:
+            self.ficModel.tags = self.ficModel.tags.union(tags)
+            self.ficModel.dumpToDisk()
+
 

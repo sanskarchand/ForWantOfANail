@@ -18,6 +18,8 @@ COL_TUPLE_FIC_CARD = (177, 174, 176)
 COL_TUPLE_FIC_CARD_PRESSED = (120, 118, 126)
 
 
+FANDOM_CROSSOVER = "[Crossover]"
+FANDOM_ALL = "<ALL>"
 
 class FicNetStatus(Enum):
     INITIATED = 0
