@@ -118,7 +118,8 @@ class FicDescriptionWidget(QtWidgets.QWidget):
         tags = set(data.split("\n"))
 
         if tags != self.ficModel.tags:
-            self.ficModel.tags = self.ficModel.tags.union(tags)
+            #self.ficModel.tags = self.ficModel.tags.union(tags)
+            self.ficModel.tags = tags
             self.ficModel.dumpToDisk()
 
 
