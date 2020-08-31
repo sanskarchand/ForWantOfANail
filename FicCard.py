@@ -31,6 +31,7 @@ class FicCard(QtWidgets.QWidget):
             self.labelFandom = QtWidgets.QLabel(label)
         else:
             self.labelFandom = QtWidgets.QLabel(ficModel.metadata.fandom)
+        self.labelFandom.setWordWrap(True)
 
         self.labelAuthor = QtWidgets.QLabel("By " + ficModel.metadata.author)
         self.labelAuthor.setStyleSheet("font-style: italic;")

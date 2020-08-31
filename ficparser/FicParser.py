@@ -181,9 +181,13 @@ class FicParser:
             modelObject.crossover = True
 
             # X + Y Crossover
-            liste = path[0].split("+")
-            fandom1 = liste[0]
-            fandom2 = liste[1].split(" ")[1]
+
+            ind_plus = path[0].index("+") # the first plus
+            ind_cross = path[0].index("Crossover")
+
+            fandom1 = path[0][:ind_plus].strip()
+            fandom2 = path[0][ind_plus+1:ind_cross].strip()
+
             modelObject.fandomsCrossover.extend([fandom1, fandom2])
             modelObject.fandom = const.FANDOM_CROSSOVER
 

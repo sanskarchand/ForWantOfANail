@@ -219,6 +219,9 @@ class MainWindow(QtWidgets.QMainWindow):
         for fic in self.loadedFicModels:
             fandom_set.add(fic.metadata.fandom)
             tag_set.union(fic.tags)
+            for fic in fic.metadata.fandomsCrossover:
+                fandom_set.add(fic)
+            
         
         fandom_list = list(fandom_set)
         fandom_list.sort()
