@@ -85,7 +85,14 @@ class FicParser:
         # Sci-Fi genere -> problems
         payload_children[2] = payload_children[2].replace("Sci-Fi", "SciFi")
 
-        isOneShot = "Updated" not in payload_children[4]
+        print("Payload children: ", payload_children)
+        #isOneShot = "Updated" not in payload_children[4]   #not a valid measure
+        isOneShot = True
+        for child in payload_children:
+            if 'Chapters' in child:
+                isOneShot = False
+
+        print("Oneshot: ", isOneShot)
        
         modelObject.title = titles[0].text
 

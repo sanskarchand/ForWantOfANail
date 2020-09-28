@@ -6,10 +6,13 @@ Dependencies:
 * Downloading stories
 * Basic Library
 * Rudimentary Reading
+* Tagging and filtering
 
 ## To add:
-* Custom tagging and filtering [in-progress]
-* Bulk downloads
+* Bulk downloads (favourites list of a particular profile)
+
+## Known problems:
+* Very rarely, failure occurs during decompression
 
 
 ### Screenshot(s)
