@@ -136,8 +136,13 @@ class FicParser:
                     modelObject.characterList.extend( index2_list[3].split(",") )
 
                 print("Li = ", index2_list)
-                modelObject.numChapters = numFromStringFunc( extractKeyFunc(index2_list[4]) )
-                modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[5]) )
+                i = 4
+                for idx, each in enumerate(index2_list):
+                    if 'Chapters:' in each:
+                        i = idx
+                        break
+                modelObject.numChapters = numFromStringFunc( extractKeyFunc(index2_list[i]) )
+                modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[i+1]) )
 
             modelObject.language = index2_list[1]
 
