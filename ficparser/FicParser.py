@@ -35,17 +35,19 @@ class FicParser:
     def constructMetadata(self):
 
         #<span class='xgray xcontrast_txt'>Rated: <a class='xcontrast_txt' href='https://www.fictionratings.com/' target='rating'>Fiction  T</a> - English - Adventure/Humor -  Harry P. - Chapters: 10   - Words: 40,849 - Reviews: <a href='/r/4390285/'>1,070</a> - Favs: 2,874 - Follows: 3,062 - Updated: <span data-xutime='1244652529'>6/10/2009</span> - Published: <span data-xutime='1215902997'>7/12/2008</span> - id: 4390285 </span>
-        
         titles =  self.soup.findAll("b", {"class": "xcontrast_txt"})
         summ = self.soup.findAll("div", {"class": "xcontrast_txt"})
         #image_tag = self.soup.findAll("div", attrs={"data-original"}) #<REM>
-        image_tag = self.soup.findAll("img", {"class": "cimage"})[0]
-        image_link = "" 
-        has_image = False 
-        if image_tag.has_attr("data-original"):
-            has_image = True
-            image_link = image_tag["data-original"]
-            print("image_link: ", image_link)
+        has_image = False   # either there is no image, or ffnet is preventing us from seeing it (script.png)
+
+        image_tags = self.soup.findAll("img", {"class": "cimage"})
+        if image_tags:
+            image_tag = image_tags[0]
+            image_link = "" 
+            if image_tag.has_attr("data-original"):
+                has_image = True
+                image_link = image_tag["data-original"]
+                print("image_link: ", image_link)
 
 
 
@@ -59,11 +61,14 @@ class FicParser:
         
 
         huge_payload = self.soup.select("span.xgray.xcontrast_txt")
+        print("HUGE PAYLOAD IS ", huge_payload)
         payload_children = list(huge_payload[0].children)
 
         modelObject = StoryModel.StoryMetadata()
         modelObject.hasImage = has_image
-        modelObject.imgUrlPath = "https://" + image_link[2:]
+
+        #modelObject.imgUrlPath = "https://" + image_link[2:]
+        modelObject.imgUrlPath = "https://fanfiction.net" + image_link
         
         """
         Parse the payload: Has 9 children;
@@ -76,27 +81,55 @@ class FicParser:
             7- > published (inside span tag)
             8 -> - id: [num] ( if complete, - Status: Complete - id: [num] )
 
+
             --- alt, if oneshot
+            if no reviews:
+                2->  - Language - Genre1/Genre2 - Words:[num] -Favs:[num] - Follows: [num] - Published:
+                3 -> published (inside span tag)
+                4 -> - id: [num] ( if complete, - Status: Complete - id: [num] )
+
+                Code will change this to the below format
+
+
             2 -> - Language - Genre1/Genre2 - Words:[num] - Reviews:
             5-> published (inside span tag)
             6 -> - id: [num] ( if complete, - Status: Complete - id: [num] )
         """
 
+        # handle the no-review one-shot case gracefully
+        # handle this later
+        '''
+        if 'Reviews' not in payload_children[2] and 'Updated' not in payload_children[4]:
+        
+            while len(payload_children) < 7:
+                payload_children.append(None)
+
+            favs_index = payload_children[2].find('- Favs')
+            rem = payload_children[2][favs_index:]
+            payload_children[2] = payload_children[2][:favs_index]  + " - Reviews:"
+            
+
+
+
+            payload_children[5] = payload_children[3]
+            payload_children[6] = payload_children[4]
+        '''
+
         # Sci-Fi genere -> problems
         payload_children[2] = payload_children[2].replace("Sci-Fi", "SciFi")
 
-        print("Payload children: ", payload_children)
-        #isOneShot = "Updated" not in payload_children[4]   #not a valid measure
-        isOneShot = True
-        for child in payload_children:
-            if 'Chapters' in child:
-                isOneShot = False
-
-        print("Oneshot: ", isOneShot)
+        isOneShot = "Updated" not in payload_children[4]
        
         modelObject.title = titles[0].text
+        
+        '''
+        print("DEBUG PAYLOAD")
+        for idx, c  in enumerate(payload_children):
+                print(f"{idx}\t=>\t{c}")
+        '''
 
         if isOneShot:
+            
             modelObject.storyID =  payload_children[6].split(":")[-1].strip()
         else:
             modelObject.storyID =  payload_children[8].split(":")[-1].strip()
@@ -136,13 +169,8 @@ class FicParser:
                     modelObject.characterList.extend( index2_list[3].split(",") )
 
                 print("Li = ", index2_list)
-                i = 4
-                for idx, each in enumerate(index2_list):
-                    if 'Chapters:' in each:
-                        i = idx
-                        break
-                modelObject.numChapters = numFromStringFunc( extractKeyFunc(index2_list[i]) )
-                modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[i+1]) )
+                modelObject.numChapters = numFromStringFunc( extractKeyFunc(index2_list[4]) )
+                modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[5]) )
 
             modelObject.language = index2_list[1]
 
@@ -164,7 +192,7 @@ class FicParser:
                 modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[4]) )
 
             modelObject.language = index2_list[1]
-
+            print("extractKeyFunc with index4_list", index4_list)
             modelObject.numFavs = numFromStringFunc( extractKeyFunc(index4_list[1]) )
             modelObject.numFollows = numFromStringFunc( extractKeyFunc(index4_list[2]) )
             modelObject.numReviews = numFromStringFunc( payload_children[3].text )

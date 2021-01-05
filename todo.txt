@@ -21,3 +21,10 @@ New todo:
     2. Separate page for fic - see details, modify tags [done, need to save tags]
     3. Update if new chapters available [not done]
     4. Add delay between downloads to be bandwidth-polite [not done]
+
+
+________________
+Sat 02 Jan 2021 09:10:54 PM +0545
+
+Motherfuckers added cloudflare protection.
+Will look for a way to bypass it

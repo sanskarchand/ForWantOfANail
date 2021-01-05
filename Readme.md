@@ -1,18 +1,19 @@
+**Warning**: Due to fanfiction.net having recently adopted Cloudflare, some changes have been made. 
+If the program crashes unexpectedly, try downloading again
+
 Dependencies:
 * Qt5
 * html5lib 
+* cloudscraper
 
 ### Current Capabilites:
 * Downloading stories
 * Basic Library
 * Rudimentary Reading
-* Tagging and filtering
 
 ## To add:
-* Bulk downloads (favourites list of a particular profile)
-
-## Known problems:
-* Very rarely, failure occurs during decompression
+* Custom tagging and filtering [in-progress]
+* Bulk downloads
 
 
 ### Screenshot(s)

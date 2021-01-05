@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import cloudscraper 
+
 from PyQt5.QtCore import Qt
 from PyQt5 import QtNetwork
 from PyQt5 import QtWidgets
@@ -7,11 +9,11 @@ import PyQt5
 from PyQt5 import QtCore
 import config.const as const
 import model.StoryModel as StoryModel
+from ficparser import FicParser
 
 import queue
 import os
 import zlib
-from ficparser import FicParser
 
 class FicDownloadModel:
 
@@ -65,8 +67,9 @@ class DownloadManager(PyQt5.QtCore.QObject):
         super().__init__()
         
         self.mainGUI = mainGUI
-        self.manager = QtNetwork.QNetworkAccessManager()
+        self.manager = QtNetwork.QNetworkAccessManager() #useless right now
         self.abstractFicQueue = queue.Queue()
+        self.scraper = cloudscraper.create_scraper()
 
         self.currentFic = None
         self.outputFile = QtCore.QFile()
@@ -74,13 +77,23 @@ class DownloadManager(PyQt5.QtCore.QObject):
         self.initialDownloadReply = None
         self.currentDownloadReply = None
 
+
+        # for cloudflare bypass
+        self.ficInitDownloadContent = None  # initial download for getting metadata
+        self.currentDownloadContent = None
+
     
     def appendRawFic(self, chapOneURL):
-     
+        self.ficInitDownloadContent = self.scraper.get(chapOneURL).content
+        self.handleInitialDownloadFinished()
+
+        ''' 
+        [Fuck cloudflare]
         url_ = QtCore.QUrl(chapOneURL)
         req = QtNetwork.QNetworkRequest(url_)
         self.initialDownloadReply = self.manager.get(req) # QNetworkReply
         self.initialDownloadReply.finished.connect(self.handleInitialDownloadFinished)
+        '''
 
     def startDownloads(self):
         self.startNextFicDownload()
@@ -98,7 +111,8 @@ class DownloadManager(PyQt5.QtCore.QObject):
     def handleInitialDownloadFinished(self):
         
         # QByteArray type
-        firstChapterData =  self.initialDownloadReply.readAll()
+        #firstChapterData =  self.initialDownloadReply.readAll()
+        firstChapterData = self.ficInitDownloadContent
         pythonString = str(firstChapterData, "utf-8") 
         pythonString = self.getDecompressed( pythonString )
 
@@ -119,11 +133,11 @@ class DownloadManager(PyQt5.QtCore.QObject):
         self.mainGUI.addFicDownloadWidget(fic_dl_model.getInitialWidget())
 
         self.abstractFicQueue.put(fic_dl_model)
-        self.initialDownloadReply.deleteLater()
+        #self.initialDownloadReply.deleteLater()
 
-        #print("INIT DOWNLOAD HANDLED")
 
     def startNextFicDownload(self):
+        print("NEXT FIC DOWNLOAD STARTED")
 
         if self.abstractFicQueue.empty():
             return
@@ -148,6 +162,8 @@ class DownloadManager(PyQt5.QtCore.QObject):
    
 
     def startNextDownload(self):
+
+        print("START NEXT DOWNLOAD CALLED")
         
         curr_queue = self.currentFic.urlQueue
 
@@ -161,8 +177,7 @@ class DownloadManager(PyQt5.QtCore.QObject):
 
         is_image = False 
         nextURL = curr_queue.get()
-        # REM this may not be a guarantee
-        if "cdn" in nextURL and "image" in nextURL:
+        if '.net/image/' in nextURL:
             is_image = True
 
         myPrefix = self.currentFic.ficModel.getCleanPrefix()
@@ -185,20 +200,32 @@ class DownloadManager(PyQt5.QtCore.QObject):
 
         self.outputFile.setFileName(fullPath)
         self.outputFile.open(QtCore.QFile.WriteOnly)
-
+        
+        '''
         req = QtNetwork.QNetworkRequest(QtCore.QUrl(nextURL))
         self.currentDownloadReply = self.manager.get(req)
+
+
         if not is_image:
             #self.currentDownloadReply.readyRead.connect(self.downloadReadyRead)
             self.currentDownloadReply.finished.connect(self.downloadFinished)
         else:
             #self.currentDownloadReply.readyRead.connect(self.downloadReadyReadImage)
             self.currentDownloadReply.finished.connect(self.downloadFinishedImage)
+        '''
+        print("DOWNLOAD nexTURL is ", nextURL)
+        self.currentDownloadContent = self.scraper.get(nextURL).content # this should be a blocking call, unlike Qt's
+        if not is_image:
+            self.downloadFinished()
+        else:
+            self.downloadFinishedImage()
+    
 
 
     def downloadFinished(self):
 
-        data = self.currentDownloadReply.readAll()
+        #data = self.currentDownloadReply.readAll()
+        data = self.currentDownloadContent
         pythonString = str(data, "utf-8")
         pythonString = self.getDecompressed(pythonString)
         # inefficient
@@ -212,7 +239,8 @@ class DownloadManager(PyQt5.QtCore.QObject):
     
     def downloadFinishedImage(self):
         
-        data = self.currentDownloadReply.readAll()
+        #data = self.currentDownloadReply.readAll()
+        data = self.currentDownloadContent
         self.outputFile.write( data )
 
         self.outputFile.close()
