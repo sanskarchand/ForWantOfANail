@@ -1,3 +1,6 @@
+**Update (2021-01-14)**: Even with the cloudflare fix, this no longer 
+works (challenge v2 error). I plan to soon add a separate downloader (if worst comes to worst, using selenium) and a separate converter (to PDF or epub)
+
 **Warning**: Due to fanfiction.net having recently adopted Cloudflare, some changes have been made. 
 If the program crashes unexpectedly, try downloading again
 
@@ -12,7 +15,7 @@ Dependencies:
 * Rudimentary Reading
 
 ## To add:
-* Custom tagging and filtering [in-progress]
+* Custom tagging and filtering [in-progress/half-done]
 * Bulk downloads
 
 
