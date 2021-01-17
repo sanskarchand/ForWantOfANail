@@ -26,5 +26,17 @@ New todo:
 ________________
 Sat 02 Jan 2021 09:10:54 PM +0545
 
-Motherfuckers added cloudflare protection.
+Morons added cloudflare protection.
 Will look for a way to bypass it
+________________
+Sun 17 Jan 2021 03:27:03 PM +0545
+
+Changed format from ffmdata(pickled class) to json.
+Need to make the serializer/deserializer cleaner (a la django)
+
+Issues:
+    -> one shots without reviews (e.g. https://www.fanfiction.net/s/13357130/1/Earthling) need a lot of change for parsing. Will need to make the 
+    parser cleaner
+
+
+    -> Qt freezes on download obviously, because we're using a blocking module for download. Need to fix this (qt and asyncio)

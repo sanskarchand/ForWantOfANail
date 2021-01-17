@@ -8,6 +8,7 @@ from ficparser import FicParser
 import FicCard
 import FicMain
 import os, pickle
+from model.StoryModel import FanficModel
 
 class MainWindow(QtWidgets.QMainWindow):
     
@@ -250,12 +251,14 @@ class MainWindow(QtWidgets.QMainWindow):
         for filename in target_files:
             
             ind = filename.rfind(".")
-            if filename[ind:] == ".ffmdata":
+            if filename[ind:] == ".json":
                 # Un-pickle and add
                 path = os.path.join(const.DEFAULT_META_PATH, filename)
                 
-                with open(path, "rb") as fi:
-                    ficModel = pickle.load(fi)
+                with open(path, "r") as fi:
+                    json_string = fi.read()
+                    ficModel = FanficModel()
+                    ficModel.deserialize(json_string)
                     
                     # due to __eq__ magic method in FanficModel
                     if ficModel not in self.loadedFicModels:

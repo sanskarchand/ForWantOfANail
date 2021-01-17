@@ -166,7 +166,6 @@ class DownloadManager(PyQt5.QtCore.QObject):
         curr_queue = self.currentFic.urlQueue
 
         if curr_queue.empty():
-            print("Dumping...")
             self.currentFic.status = const.FicNetStatus.COMPLETED
             self.currentFic.ficModel.dumpToDisk()
             self.mainGUI.handleFicPopulate()
