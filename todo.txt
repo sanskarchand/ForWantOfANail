@@ -35,8 +35,14 @@ Changed format from ffmdata(pickled class) to json.
 Need to make the serializer/deserializer cleaner (a la django)
 
 Issues:
+    -> No genres -> character list gets interpreted as genre list 
+
     -> one shots without reviews (e.g. https://www.fanfiction.net/s/13357130/1/Earthling) need a lot of change for parsing. Will need to make the 
     parser cleaner
 
 
     -> Qt freezes on download obviously, because we're using a blocking module for download. Need to fix this (qt and asyncio)
+
+
+
+In short: total overhaul of parser needed
