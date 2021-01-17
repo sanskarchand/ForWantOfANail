@@ -77,6 +77,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.postInitialization()
 
+    #FIXME: temp fix for using cloudflare, match timings
+    def tempDLGetButton(self):
+        return self.butActualDownload
+
     
     def initializeGUI(self):
         

@@ -1,3 +1,5 @@
+**Update (2021-01-17)**: Haven't added the separate downloader/converter yet, but it works right now. Will change metadata format from pickle to json.
+
 **Update (2021-01-14)**: Even with the cloudflare fix, this no longer 
 works (challenge v2 error). I plan to soon add a separate downloader (if worst comes to worst, using selenium) and a separate converter (to PDF or epub)
 

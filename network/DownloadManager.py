@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 import cloudscraper 
 
@@ -84,6 +83,8 @@ class DownloadManager(PyQt5.QtCore.QObject):
 
     
     def appendRawFic(self, chapOneURL):
+        self.mainGUI.tempDLGetButton().setEnabled(False)      # disable but until fic metadata is parsed
+        # QByteArray type
         self.ficInitDownloadContent = self.scraper.get(chapOneURL).content
         self.handleInitialDownloadFinished()
 
@@ -109,7 +110,7 @@ class DownloadManager(PyQt5.QtCore.QObject):
 
     #--- SLOTS --
     def handleInitialDownloadFinished(self):
-        
+        self.mainGUI.tempDLGetButton().setEnabled(True)
         # QByteArray type
         #firstChapterData =  self.initialDownloadReply.readAll()
         firstChapterData = self.ficInitDownloadContent
@@ -137,7 +138,6 @@ class DownloadManager(PyQt5.QtCore.QObject):
 
 
     def startNextFicDownload(self):
-        print("NEXT FIC DOWNLOAD STARTED")
 
         if self.abstractFicQueue.empty():
             return
@@ -163,8 +163,6 @@ class DownloadManager(PyQt5.QtCore.QObject):
 
     def startNextDownload(self):
 
-        print("START NEXT DOWNLOAD CALLED")
-        
         curr_queue = self.currentFic.urlQueue
 
         if curr_queue.empty():

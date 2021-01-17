@@ -40,6 +40,7 @@ class FicParser:
         #image_tag = self.soup.findAll("div", attrs={"data-original"}) #<REM>
         has_image = False   # either there is no image, or ffnet is preventing us from seeing it (script.png)
 
+
         image_tags = self.soup.findAll("img", {"class": "cimage"})
         if image_tags:
             image_tag = image_tags[0]
@@ -59,9 +60,11 @@ class FicParser:
                 author_link = link
                 break
         
+        profile_top = self.soup.find("div", {"id": "profile_top"})
+        if profile_top is None:
+            print("Error: the fic is only half-downloaded. Try again later")
 
-        huge_payload = self.soup.select("span.xgray.xcontrast_txt")
-        print("HUGE PAYLOAD IS ", huge_payload)
+        huge_payload = profile_top.select("span.xgray.xcontrast_txt")
         payload_children = list(huge_payload[0].children)
 
         modelObject = StoryModel.StoryMetadata()
