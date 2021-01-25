@@ -6,6 +6,9 @@ works (challenge v2 error). I plan to soon add a separate downloader (if worst c
 **Warning**: Due to fanfiction.net having recently adopted Cloudflare, some changes have been made. 
 If the program crashes unexpectedly, try downloading again
 
+**Disclaimer**: The file res/ffnet\_icon.png belongs to FictionPress and not
+ to me. It is provided here as a sample. This program is not affiliated with FictionPress or fanfiction.ne in any way.
+
 Dependencies:
 * Qt5
 * html5lib 

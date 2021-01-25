@@ -116,7 +116,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.readNavWidgetLayout.setVerticalSpacing(0)
         
         # set button icons and other styles
-        self.textInfoLabel.setStyleSheet("text-align: center;")
+        self.textInfoLabel.setStyleSheet("text-align: center; padding: 0 auto;")
         style_1 = QtWidgets.QCommonStyle()
         self.prevChapButton.setIcon(style_1.standardIcon(QtWidgets.QStyle.SP_ArrowLeft))
         self.nextChapButton.setIcon(style_1.standardIcon(QtWidgets.QStyle.SP_ArrowRight))
