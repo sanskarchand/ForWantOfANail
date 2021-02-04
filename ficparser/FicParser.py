@@ -142,8 +142,8 @@ class FicParser:
         modelObject.rating = payload_children[1].text
         modelObject.summary = summ[0].text
 
-        index2_list = list( map(lambda x: x.strip(), payload_children[2].split("-")) )
-        index4_list = list( map(lambda x: x.strip(), payload_children[4].split("-")) )
+        index2_list = list( map(lambda x: x.strip(), payload_children[2].split(" - ")) )
+        index4_list = list( map(lambda x: x.strip(), payload_children[4].split(" - ")) )
 
 
         extractKeyFunc  = lambda dat: dat.split(":")[1].strip()
