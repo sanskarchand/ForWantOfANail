@@ -266,11 +266,15 @@ class MainWindow(QtWidgets.QMainWindow):
         
         self.loadedFicModels.extend(tempLoadedFicModels)
         
+        # sort alphabetically
+        self.loadedFicModels.sort(key = lambda fic: fic.metadata.title)
+
         for idx, model in enumerate(self.loadedFicModels):
             widget = FicCard.FicCard(self, model)
             row, col = self.getGridCoordsFromIndex(idx)
             self.tabLibCardContainerLayout.addWidget(widget, row, col)
 
+        
         self.resetFilterElements()
 
     def handleFicFilter(self):

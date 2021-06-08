@@ -1,10 +1,4 @@
-**Update (2021-01-17)**: Cloudflare fix works as long as ffnet doesn't blacklist your IP. Changed format from pickle to json. Will add separate downloader/converter soon.
-
-**Update (2021-01-14)**: Even with the cloudflare fix, this no longer 
-works (challenge v2 error). I plan to soon add a separate downloader (if worst comes to worst, using selenium) and a separate converter (to PDF or epub)
-
-**Warning**: Due to fanfiction.net having recently adopted Cloudflare, some changes have been made. 
-If the program crashes unexpectedly, try downloading again
+**Note**: If the GUI downloader doesn't work, use selenium\_dl.py
 
 **Disclaimer**: The file res/ffnet\_icon.png belongs to FictionPress and not
  to me. It is provided here as a sample. This program is not affiliated with FictionPress or fanfiction.ne in any way.
@@ -13,6 +7,7 @@ Dependencies:
 * Qt5
 * html5lib 
 * cloudscraper
+* Selenium (with chromedriver) [optional]
 
 ### Current Capabilites:
 * Downloading stories

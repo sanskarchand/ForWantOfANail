@@ -120,8 +120,19 @@ class FicParser:
 
         # Sci-Fi genere -> problems
         payload_children[2] = payload_children[2].replace("Sci-Fi", "SciFi")
-
-        isOneShot = "Updated" not in payload_children[4]
+        
+        # Does not account for fics that are uploaded at once, with all their chapters (e.g. reuploads)       
+        #isOneShot = "Updated" not in payload_children[4]
+        
+        missingUpdatedField = "Updated" not in payload_children[4]
+        isOneShot = True
+        for idx, plchd in enumerate(payload_children):
+            #print(idx, plchd)
+            ind = str(plchd).find("Chapters:")
+            if ind != -1:
+                isOneShot = False     
+               
+                
        
         modelObject.title = titles[0].text
         
@@ -131,7 +142,7 @@ class FicParser:
                 print(f"{idx}\t=>\t{c}")
         '''
 
-        if isOneShot:
+        if missingUpdatedField:
             
             modelObject.storyID =  payload_children[6].split(":")[-1].strip()
         else:
@@ -195,14 +206,14 @@ class FicParser:
                 modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[4]) )
 
             modelObject.language = index2_list[1]
-            print("extractKeyFunc with index4_list", index4_list)
+            #print("extractKeyFunc with index4_list", index4_list)
             modelObject.numFavs = numFromStringFunc( extractKeyFunc(index4_list[1]) )
             modelObject.numFollows = numFromStringFunc( extractKeyFunc(index4_list[2]) )
             modelObject.numReviews = numFromStringFunc( payload_children[3].text )
 
 
         
-        if isOneShot:
+        if missingUpdatedField:
             modelObject.publishedTimestamp = payload_children[5]["data-xutime"]
             modelObject.publishedDateString = str(payload_children[5].text)
         else:
