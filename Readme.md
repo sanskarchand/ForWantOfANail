@@ -1,4 +1,6 @@
 **Note**: If the GUI downloader doesn't work, use selenium\_dl.py
+You need to have Google Chrome installed, and may need to give the path to 
+the executable in selenium\_dl.py
 
 **Disclaimer**: The file res/ffnet\_icon.png belongs to FictionPress and not
  to me. It is provided here as a sample. This program is not affiliated with FictionPress or fanfiction.ne in any way.
@@ -6,7 +8,8 @@
 Dependencies:
 * Qt5
 * html5lib 
-* cloudscraper
+* undetected\_chromedriver
+* cloudscraper (unused for now)
 * Selenium (with chromedriver) [optional]
 
 ### Current Capabilites:

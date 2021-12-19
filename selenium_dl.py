@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import undetected_chromedriver.v2 as uc
 from selenium import webdriver
 import sys
 from ficparser import FicParser
@@ -14,8 +14,10 @@ WAITING_TIME = 4  # time to wait between downloads, in seconds
 
 #profile = webdriver.FirefoxProfile()
 #profile.set_preference("general.useragent.override", USER_AGENT)
-options = webdriver.ChromeOptions() 
-options.add_argument("--disable-blink-features=AutomationControlled")
+#options = webdriver.ChromeOptions() 
+#options.add_argument("--disable-blink-features=AutomationControlled")
+options = uc.ChromeOptions()
+options.binary_location = '/usr/bin/google-chrome-stable'
 
 def downloadThing(chap_num, driver, ficModel, url, isImage=False):
 
@@ -60,7 +62,8 @@ def main():
     
     url = sys.argv[1]
     #driver = webdriver.Firefox(profile)
-    driver = webdriver.Chrome(options=options)
+    #driver = webdriver.Chrome(options=options)
+    driver = uc.Chrome(options=options)
     print("URL", url)
     driver.get(url)
     src = driver.page_source
