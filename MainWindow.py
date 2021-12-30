@@ -218,17 +218,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def resetFilterElements(self):
         self.filterFandomComboBox.clear()
-
-        fandom_set = set()
+        
+        fandom_dict = dict()        # Fandom => no. of fics
         tag_set = set()
         for fic in self.loadedFicModels:
-            fandom_set.add(fic.metadata.fandom)
+            fandom_dict[fic.metadata.fandom] = fandom_dict.get(fic.metadata.fandom, 0) + 1
             tag_set.union(fic.tags)
             for fic in fic.metadata.fandomsCrossover:
-                fandom_set.add(fic)
+                fandom_dict[fic] = fandom_dict.get(fic, 0) + 1
             
         
-        fandom_list = list(fandom_set)
+        fandom_list = [f"{fandom} ({count})" for fandom, count in fandom_dict.items()]
         fandom_list.sort()
         # filter for all fandoms at top | effectively a non-filter
         fandom_list.insert(0, const.FANDOM_ALL)
@@ -283,7 +283,14 @@ class MainWindow(QtWidgets.QMainWindow):
         fics = self.loadedFicModels
         
         index = self.filterFandomComboBox.currentIndex()
+        
+        # remove parens 
         fi_fandom = self.filterFandomComboBox.itemText(index)
+        rind = fi_fandom.rfind("(")
+        if rind != -1:
+            fi_fandom = fi_fandom[:rind].strip()
+
+
         fi_tags = self.filterTagsEdit.text().lstrip().rstrip()
         if fi_tags != '':
             fi_tags = set(fi_tags.split(" "))
