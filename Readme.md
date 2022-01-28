@@ -4,6 +4,8 @@ the executable in selenium\_dl.py. Please use a spare
 executable/installation (e.g. an unstable version) as 
 using undetected\_chromedriver may break your configuration.
 
+**Note2**: Requires python 3.10 (for match-case syntax)
+
 **Disclaimer**: The file res/ffnet\_icon.png belongs to FictionPress and not
  to me. It is provided here as a sample. This program is not affiliated with FictionPress or fanfiction.ne in any way.
 
