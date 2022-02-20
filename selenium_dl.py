@@ -17,7 +17,7 @@ WAITING_TIME = 4  # time to wait between downloads, in seconds
 #options = webdriver.ChromeOptions() 
 #options.add_argument("--disable-blink-features=AutomationControlled")
 options = uc.ChromeOptions()
-options.binary_location = '/usr/bin/google-chrome-stable'
+options.binary_location = '/usr/bin/google-chrome-unstable'
 
 def downloadThing(chap_num, driver, ficModel, url, isImage=False):
 
@@ -49,8 +49,11 @@ def downloadThing(chap_num, driver, ficModel, url, isImage=False):
             content = driver.page_source
             f.write(content)
         else:
-            imgElem = driver.find_elements_by_tag_name('img')[0]
-            imgElem.screenshot(fullPath)
+            imgElem = driver.find_elements_by_tag_name('img')
+            # if list not empty
+            if imgElem:
+                imgElem = imgElem[0]
+                imgElem.screenshot(fullPath)
 
 
 
@@ -66,6 +69,7 @@ def main():
     driver = uc.Chrome(options=options)
     print("URL", url)
     driver.get(url)
+    time.sleep(3)
     src = driver.page_source
 
     parsed = FicParser.FicParser(src)
