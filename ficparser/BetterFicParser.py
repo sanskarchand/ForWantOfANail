@@ -3,6 +3,14 @@
 import bs4
 from model import StoryModel
 import config.const as const
+import pprint
+
+ELEM_KEYWORDS = ["Rated",
+                 "Chapters", "Words",
+                 "Reviews", "Favourites", "Follows",
+                 "Updated", "Published", "id"
+                ]
+
 
 class FicParser:
 
@@ -22,8 +30,32 @@ class FicParser:
             p["style"]= "text-align: left;"
 
         return  str(self.soup.select("div.storytextp")[0])
-        
+       
 
+
+    def extractNamedElem(self, elem_string, metadata_text):
+        ind  = metadata_text.find(elem_string) 
+        if ind == -1:
+            return None
+        
+        val = metadata_text[ind:]
+        return val
+
+    def extractNamedValue(self, elem_string, metadata_text):
+        whole = self.extractNamedElem(elem_string, metadata_text)
+        if whole is None:
+            return None
+
+        idx = whole.find(":")
+        if idx == -1:
+            print("error: colon missing during parsing of ", elem_string)
+            return None
+        
+        return whole[idx+2]
+    
+    def intFromString(self, string):
+        return int(string.replace(",", ""))
+        
     def constructMetadata(self):
 
         #<span class='xgray xcontrast_txt'>Rated: <a class='xcontrast_txt' href='https://www.fictionratings.com/' target='rating'>Fiction  T</a> - English - Adventure/Humor -  Harry P. - Chapters: 10   - Words: 40,849 - Reviews: <a href='/r/4390285/'>1,070</a> - Favs: 2,874 - Follows: 3,062 - Updated: <span data-xutime='1244652529'>6/10/2009</span> - Published: <span data-xutime='1215902997'>7/12/2008</span> - id: 4390285 </span>
@@ -43,11 +75,11 @@ class FicParser:
 
 
 
-
         links = self.soup.findAll("a", {"class": "xcontrast_txt"})
         author_link = None
         for link in links:
             if "/u/" in link["href"]:
+                print("auth link", link)
                 author_link = link
                 break
         
@@ -57,129 +89,93 @@ class FicParser:
 
         huge_payload = profile_top.select("span.xgray.xcontrast_txt")
         payload_children = list(huge_payload[0].children)
+        all_mdata_text = ''.join([pc.text for pc in payload_children])
+
+        # do some preprocessing before this
+        all_mdata_text = all_mdata_text.replace("Sci-Fi", "SciFi")
+
 
         modelObject = StoryModel.StoryMetadata()
         modelObject.hasImage = has_image
-
-        #modelObject.imgUrlPath = "https://" + image_link[2:]
         modelObject.imgUrlPath = "https://fanfiction.net" + image_link
+
+    
+        # Now, onto the actual parsing
+        # Element order (square brackets denote optional presence, and
+        # angle brackets are for required elems)
+        # <rating><genre>[character list][chapters]<words>[review][favs][follows][updated]<published><storyid>
+
+
         
-        #payload_children[2] = payload_children[2].replace("Sci-Fi", "SciFi")
-        
-        # Does not account for fics that are uploaded at once, with all their chapters (e.g. reuploads)       
-        #isOneShot = "Updated" not in payload_children[4]
-        
-        missingUpdatedField = "Updated" not in payload_children[4]
-        isOneShot = True
-        for idx, plchd in enumerate(payload_children):
-            #print(idx, plchd)
-            ind = str(plchd).find("Chapters:")
-            if ind != -1:
-                isOneShot = False     
-               
-                
+        published = self.extractNamedValue("Published", all_mdata_text)
+        updated = self.extractNamedValue("Updated", all_mdata_text)
+        chapters = self.extractNamedValue("Chapters", all_mdata_text)
+        rated = self.extractNamedValue("Rated", all_mdata_text)
+
+
+        missingUpdatedField = updated is None
+        isOneShot = chapters is None
        
         modelObject.title = titles[0].text
-        
-        '''
-        print("DEBUG PAYLOAD")
-        for idx, c  in enumerate(payload_children):
-                print(f"{idx}\t=>\t{c}")
-        '''
-
-        if missingUpdatedField:
-            
-            modelObject.storyID =  payload_children[6].split(":")[-1].strip()
-        else:
-            modelObject.storyID =  payload_children[8].split(":")[-1].strip()
 
         modelObject.author = author_link.text
         modelObject.authorID = self.extractUserID(author_link["href"])
-        modelObject.rating = payload_children[1].text
+        modelObject.rating = rated
         modelObject.summary = summ[0].text
 
-        index2_list = list( map(lambda x: x.strip(), payload_children[2].split(" - ")) )
-        index4_list = list( map(lambda x: x.strip(), payload_children[4].split(" - ")) )
-
-
-        extractKeyFunc  = lambda dat: dat.split(":")[1].strip()
-        numFromStringFunc = lambda num_str: int(num_str.replace(",", ""))
         
-        modelObject.genreList = index2_list[2].split("/")
+        modelObject.genreList= all_mdata_text.split("-")[2].split("/")
+
+        #modelObject.genreList = index2_list[2].split("/")
+
         if "Hurt" in modelObject.genreList:
             ind = modelObject.genreList.index("Hurt")
             modelObject.genreList.pop(ind)  # pop 'Hurt'
             modelObject.genreList.pop(ind)  # pop 'Comfort'
             modelObject.genreList.insert(ind, "Hurt/Comfort")
+        
 
-
-        # Parsing decision depends on existence of character list, which in turn depends on 
-        #   whether the fic is a oneshot
-
-        #modelObject.numChapters = numFromStringFunc( extractKeyFunc(index2_list[3]) )
-        #modelObject.numWords = numFromStringFunc( extractKeyFunc(index2_list[4]) )
-        modelObject.characterList.append( index2_list[3] )
-        #modelObject.language = index2_list[1]
-
-        #modelObject.numFavs = numFromStringFunc( extractKeyFunc(index4_list[1]) )
-        #modelObject.numFollows = numFromStringFunc( extractKeyFunc(index4_list[2]) )
-        #modelObject.numReviews = numFromStringFunc( payload_children[3].text )
-
+        # Extract fandom stuff
         preStoryDiv = self.soup.select("div#pre_story_links")[0]
-
-        # note:: possible collision with author name tag?
-        # Minimal chance of error: These section links always pop up before the author links
-        # indices 0 and 1 for section. 
         sectionPath = preStoryDiv.select("a.xcontrast_txt")
-        path = []
-        for item in sectionPath:
-            path.append(str(item.text))
-
+        path = [str(item.text) for item in sectionPath]
+        
         if len(path) == 1:
             modelObject.crossover = True
-
-            # X + Y Crossover
-
-            ind_plus = path[0].index("+") # the first plus
-            ind_cross = path[0].index("Crossover")
-
-            fandom1 = path[0][:ind_plus].strip()
-            fandom2 = path[0][ind_plus+1:ind_cross].strip()
-
-            modelObject.fandomsCrossover.extend([fandom1, fandom2])
             modelObject.fandom = const.FANDOM_CROSSOVER
-
+            modelObject.fandomsCrossover = self.extractCrossoverFandoms(path)
         else:
-            modelObject.category = path[0]
-            modelObject.fandom = path[1]
+            modelObject.category = path[0].strip()
+            modelObject.fandom = path[1].strip()
+
+
+
 
         
-        if not isOneShot:
-            chapterNav = self.soup.select("#chap_select")[0]
-            optionTags = chapterNav.findAll("option")
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(modelObject.__dict__)
 
-            #NOTE: since the option tags are not closed, the _text_ attribute gives the 
-            #titles for all chapters. So, we do the following to get the pure titles
-            temp_li = [tag.text for tag in optionTags]
-            pure_chapter_titles = self.extractPureChapterTitles(temp_li)
+    
+    def extractCrossoverFandoms(path):
+        if path.count("+") == 2:
+            print("Warning: crossover: fandom name has + in it")
 
-            for chap_title in pure_chapter_titles:
-                modelObject.chapterTitles.append(chap_title)
-            
-           
-            modelObject.numChapters = len(modelObject.chapterTitles)
-        else:
-            modelObject.chapterTitles.append("<Oneshot>")
-        
-        return modelObject
-        
+        idx = path.idx("+")
+        idx2 = path.idx(" Crossover")
+
+        fandom1 = path[:idx].strip()
+        fandom2 = path[idx+1:idx2].strip()
+        return [fandom1, fandom2]
 
 
     def extractUserID(self, profileURL):
         # /u/1602381/Shadow-Rebirth
 
         #print("GIVEN: ", profileURL)
-        return profileURL.split("/")[2]
+        idx = profileURL.find("/u/") + 3
+        idx2 = profileURL.find("/", idx)
+        return profileURL[idx:idx2]
+
 
     def extractPureChapterTitles(self, whack_titles):
 
