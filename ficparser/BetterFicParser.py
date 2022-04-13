@@ -4,6 +4,7 @@ import bs4
 from model import StoryModel
 import config.const as const
 import pprint
+from collections import defaultdict
 
 ELEM_KEYWORDS = ["Rated",
                  "Chapters", "Words",
@@ -51,7 +52,8 @@ class FicParser:
             print("error: colon missing during parsing of ", elem_string)
             return None
         
-        return whole[idx+2]
+        delim_idx = whole.find(" - ", idx+1)
+        return whole[idx+2:delim_idx]
     
     def intFromString(self, string):
         return int(string.replace(",", ""))
@@ -87,13 +89,22 @@ class FicParser:
         if profile_top is None:
             print("Error: the fic is only half-downloaded (page not fully loaded). Try again later")
 
+        mdata_dates_raw = self.soup.findAll("span", {"data-xutime": True})
+        mdata_dates = defaultdict(str)
+        for date in mdata_dates_raw:
+            if "Published" in date.previous_sibling.text:
+                mdata_dates["published"] = date["data-xutime"]
+            elif "Updated" in date.previous_sibling.text:
+                mdata_dates["updated"] = date["data-xutime"]
+
+
         huge_payload = profile_top.select("span.xgray.xcontrast_txt")
         payload_children = list(huge_payload[0].children)
         all_mdata_text = ''.join([pc.text for pc in payload_children])
 
         # do some preprocessing before this
         all_mdata_text = all_mdata_text.replace("Sci-Fi", "SciFi")
-
+        print(all_mdata_text)
 
         modelObject = StoryModel.StoryMetadata()
         modelObject.hasImage = has_image
@@ -105,26 +116,30 @@ class FicParser:
         # angle brackets are for required elems)
         # <rating><genre>[character list][chapters]<words>[review][favs][follows][updated]<published><storyid>
 
-
-        
         published = self.extractNamedValue("Published", all_mdata_text)
+        print('published is ', published)
         updated = self.extractNamedValue("Updated", all_mdata_text)
-        chapters = self.extractNamedValue("Chapters", all_mdata_text)
+        storyID = self.extractNamedValue("id", all_mdata_text)
+        numChapters = self.extractNamedValue("Chapters", all_mdata_text)
         rated = self.extractNamedValue("Rated", all_mdata_text)
 
 
         missingUpdatedField = updated is None
-        isOneShot = chapters is None
-       
-        modelObject.title = titles[0].text
+        isOneShot = numChapters is None
 
+        modelObject.title = titles[0].text
         modelObject.author = author_link.text
         modelObject.authorID = self.extractUserID(author_link["href"])
+        modelObject.storyID = storyID
         modelObject.rating = rated
         modelObject.summary = summ[0].text
+        modelObject.numChapters = int(numChapters or 1)
+        modelObject.rating = rated
+        modelObject.publishedTimestamp = mdata_dates["published"]
+        modelObject.updatedTimestamp = mdata_dates["updated"]
 
         
-        modelObject.genreList= all_mdata_text.split("-")[2].split("/")
+        modelObject.genreList = all_mdata_text.split("-")[2].split("/")
 
         #modelObject.genreList = index2_list[2].split("/")
 
@@ -133,6 +148,20 @@ class FicParser:
             modelObject.genreList.pop(ind)  # pop 'Hurt'
             modelObject.genreList.pop(ind)  # pop 'Comfort'
             modelObject.genreList.insert(ind, "Hurt/Comfort")
+
+
+        # Extract chapter titles
+        if not isOneShot:
+            chapter_nav = self.soup.select("#chap_select")[0]
+            option_tags = chapter_nav.findAll("option")
+
+            temp_li = [tag.text for tag in option_tags]
+            pure_chap_titles = self.extractPureChapterTitles(temp_li)
+            modelObject.chapterTitles.extend(pure_chap_titles)
+        else:
+            modelObject.chapterTitles.append("<Oneshot>")
+
+        
         
 
         # Extract fandom stuff
@@ -147,15 +176,11 @@ class FicParser:
         else:
             modelObject.category = path[0].strip()
             modelObject.fandom = path[1].strip()
+        #pp = pprint.PrettyPrinter(indent=4)
+        #pp.pprint(modelObject.__dict__)
 
-
-
-
+        return modelObject # return metadata
         
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(modelObject.__dict__)
-
-    
     def extractCrossoverFandoms(path):
         if path.count("+") == 2:
             print("Warning: crossover: fandom name has + in it")

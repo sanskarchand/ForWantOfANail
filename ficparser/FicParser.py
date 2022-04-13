@@ -158,7 +158,7 @@ class FicParser:
 
 
         extractKeyFunc  = lambda dat: dat.split(":")[1].strip()
-        numFromStringFunc = lambda num_str: int(num_str.replace(",", ""))
+        numFromStringFunc = lambda num_str: 0 if num_str.replace(",", "") == "" else int(num_str.replace(",", ""))
         
         modelObject.genreList = index2_list[2].split("/")
         if "Hurt" in modelObject.genreList:

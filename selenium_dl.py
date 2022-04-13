@@ -2,7 +2,7 @@
 import undetected_chromedriver.v2 as uc
 from selenium import webdriver
 import sys
-from ficparser import FicParser
+from ficparser import FicParser, BetterFicParser
 import model.StoryModel as StoryModel
 from config import const
 import time
@@ -69,10 +69,11 @@ def main():
     driver = uc.Chrome(options=options)
     print("URL", url)
     driver.get(url)
-    time.sleep(3)
+    time.sleep(10)
     src = driver.page_source
 
-    parsed = FicParser.FicParser(src)
+    #parsed = FicParser.FicParser(src)
+    parsed = BetterFicParser.FicParser(src)
 
     init_metadata = parsed.constructMetadata()
     ficModel = StoryModel.FanficModel()
