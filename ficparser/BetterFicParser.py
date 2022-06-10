@@ -172,7 +172,7 @@ class FicParser:
         if len(path) == 1:
             modelObject.crossover = True
             modelObject.fandom = const.FANDOM_CROSSOVER
-            modelObject.fandomsCrossover = self.extractCrossoverFandoms(path)
+            modelObject.fandomsCrossover = self.extractCrossoverFandoms(path[0])
         else:
             modelObject.category = path[0].strip()
             modelObject.fandom = path[1].strip()
@@ -181,12 +181,12 @@ class FicParser:
 
         return modelObject # return metadata
         
-    def extractCrossoverFandoms(path):
+    def extractCrossoverFandoms(self, path):
         if path.count("+") == 2:
             print("Warning: crossover: fandom name has + in it")
 
-        idx = path.idx("+")
-        idx2 = path.idx(" Crossover")
+        idx = path.index("+")
+        idx2 = path.index(" Crossover")
 
         fandom1 = path[:idx].strip()
         fandom2 = path[idx+1:idx2].strip()
