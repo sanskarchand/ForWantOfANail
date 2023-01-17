@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import undetected_chromedriver.v2 as uc
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 import sys
 from ficparser import FicParser, BetterFicParser
 import model.StoryModel as StoryModel
@@ -9,7 +10,7 @@ import time
 import os
 
 #USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0"
-WAITING_TIME = 4  # time to wait between downloads, in seconds
+WAITING_TIME = 7  # time to wait between downloads, in seconds
 
 
 #profile = webdriver.FirefoxProfile()
@@ -49,10 +50,8 @@ def downloadThing(chap_num, driver, ficModel, url, isImage=False):
             content = driver.page_source
             f.write(content)
         else:
-            imgElem = driver.find_elements_by_tag_name('img')
-            # if list not empty
+            imgElem = driver.find_element(By.TAG_NAME, 'img')
             if imgElem:
-                imgElem = imgElem[0]
                 imgElem.screenshot(fullPath)
 
 
