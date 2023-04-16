@@ -18,7 +18,7 @@ WAITING_TIME = 7  # time to wait between downloads, in seconds
 #options = webdriver.ChromeOptions() 
 #options.add_argument("--disable-blink-features=AutomationControlled")
 options = uc.ChromeOptions()
-options.binary_location = '/usr/bin/google-chrome-unstable'
+options.binary_location = '/usr/bin/google-chrome-stable'
 
 def downloadThing(chap_num, driver, ficModel, url, isImage=False):
 
@@ -61,6 +61,8 @@ def main():
     if len(sys.argv) < 2:
         print("Supply a url.")
         print("Usage: python selenium_dl.py <url>")
+
+    skip_image = len(sys.argv) >= 3 and sys.argv[2] == "--skip-image"
     
     url = sys.argv[1]
     #driver = webdriver.Firefox(profile)
@@ -94,7 +96,11 @@ def main():
         time.sleep(WAITING_TIME)
 
     if ficModel.metadata.hasImage:
-        downloadThing(None, driver, ficModel, ficModel.metadata.imgUrlPath, True)
+        if skip_image:
+            print("Skipping image download. You can add it manually later.")
+            ficModel.metadata.hasImage = False
+        else:
+            downloadThing(None, driver, ficModel, ficModel.metadata.imgUrlPath, True)
 
     
     ficModel.dumpToDisk()

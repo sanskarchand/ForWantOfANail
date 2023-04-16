@@ -6,6 +6,8 @@ using undetected\_chromedriver may break your configuration.
 
 **Note2**: Requires python 3.10 (for match-case syntax)
 
+**Note3**: Please use the --skip-image option with selenium\_dl.py
+
 **Disclaimer**: The file res/ffnet\_icon.png belongs to FictionPress and not
  to me. It is provided here as a sample. This program is not affiliated with FictionPress or fanfiction.ne in any way.
 
