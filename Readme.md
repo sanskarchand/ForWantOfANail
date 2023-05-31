@@ -1,8 +1,8 @@
-**Note**: If the GUI downloader doesn't work, use selenium\_dl.py
-You need to have Google Chrome installed, and may need to give the path to 
-the executable in selenium\_dl.py. Please use a spare 
-executable/installation (e.g. an unstable version) as 
-using undetected\_chromedriver may break your configuration.
+**Current usage**: python selenium\_dl.py <fanfic url> --skip-image
+
+**Note**: Please provide the path to your chrome executable in selenium\_dl.py.
+This program is untested on windows, so in case you get an error, please try to
+manually override the DATA\_DIR variable.
 
 **Note2**: Requires python 3.10 (for match-case syntax)
 

@@ -8,9 +8,17 @@ import model.StoryModel as StoryModel
 from config import const
 import time
 import os
+from pathlib import Path
+import platform
 
-#USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0"
+
+USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0"
 WAITING_TIME = 7  # time to wait between downloads, in seconds
+
+if platform.system() == "Linux":
+    DATA_DIR =  Path(os.getenv("HOME")) / '.config/google-chrome/Profile 1/'
+elif platform.system() == "Windows":
+    DATA_DIR = Path(os.environ("USERPROFILE")) /'AppData'/'Local'/'Google'/'Google Chrome'/'User Data'
 
 
 #profile = webdriver.FirefoxProfile()
@@ -19,6 +27,8 @@ WAITING_TIME = 7  # time to wait between downloads, in seconds
 #options.add_argument("--disable-blink-features=AutomationControlled")
 options = uc.ChromeOptions()
 options.binary_location = '/usr/bin/google-chrome-stable'
+options.add_argument(f"--user-data-dir={DATA_DIR}")
+#options.add_argument(f"--user-agent={USER_AGENT}")
 
 def downloadThing(chap_num, driver, ficModel, url, isImage=False):
 
@@ -70,7 +80,10 @@ def main():
     driver = uc.Chrome(options=options)
     print("URL", url)
     driver.get(url)
-    time.sleep(10)
+    while "/cdn-cgi/styles/challenges.css" in driver.page_source:
+        print("Still cloudflare, waiting for 5 secs")
+        time.sleep(5)
+
     src = driver.page_source
 
     #parsed = FicParser.FicParser(src)
