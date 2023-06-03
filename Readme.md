@@ -1,4 +1,7 @@
 **Current usage**: python selenium\_dl.py <fanfic url> --skip-image
+If Cloudflare keeps asking you to prove you're a human (and this tends to
+happen in a loop recently), simply copy and paste the URL
+into a new tab manually, exit the browser, and restart the program again.
 
 **Note**: Please provide the path to your chrome executable in selenium\_dl.py.
 This program is untested on windows, so in case you get an error, please try to
